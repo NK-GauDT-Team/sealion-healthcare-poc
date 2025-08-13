@@ -1,0 +1,87 @@
+Concept Overview – “Personal Medical Assistant” (Proof of Concept Website)
+The Personal Medical Assistant is a location-aware, AI-powered web platform designed to assist travelers in managing unexpected health issues while abroad.
+
+Example Scenario:
+A traveler from Jakarta arrives in Thailand and suddenly feels unwell. Through the website, they can interact with a medical chatbot that:
+
+Understands the user’s symptoms through a natural conversation.
+
+Analyzes their condition using an AI-powered health assistant.
+
+Searches for prescriptive medications using Retrieval-Augmented Generation (RAG) from medical PDFs.
+
+Finds locally available alternatives — tailored to Thailand’s pharmacies and over-the-counter rules.
+
+Provides a clear medicine list (both prescribed and alternative) along with exact pharmacy or convenience store locations.
+
+Displays results on an interactive map so the user can see where to buy the medicine immediately.
+
+Website Structure for Proof of Concept
+1. Landing Page
+Hero Section:
+
+Tagline: “Your Health Companion, Anywhere in the World.”
+
+Brief description of how the service works.
+
+Quick “Start Chat” button.
+
+Key Features:
+
+Symptom-based AI consultation.
+
+Location-aware medicine recommendations.
+
+Interactive pharmacy locator.
+
+Multilingual support (for travelers in non-English speaking countries).
+
+Illustrative Example:
+
+Animated or illustrated journey showing a traveler in distress → using chatbot → receiving medicine suggestions → finding a nearby store.
+
+2. User Journey Page
+A detailed, step-by-step visual walkthrough:
+
+Step 1 – User starts chat describing symptoms.
+Step 2 – Chatbot analyzes symptoms using AI.
+Step 3 – RAG searches trusted medical sources (e.g., PDFs, databases) for possible treatments.
+Step 4 – Location-aware search finds equivalent medicines available in the user’s current country.
+Step 5 – Chatbot presents:
+
+Medicine details (dosage, side effects, alternatives).
+
+Map with pharmacies and convenience stores carrying the medicines.
+Step 6 – User can select a location and get navigation directions.
+
+(Include visual flow diagrams and mockups.)
+
+3. Live Chatbot Demo Page
+Main Section:
+
+Left: Chat window where the user interacts with the AI assistant.
+
+Above: Small symptom form (optional, to speed up diagnosis).
+
+Right (or above the chat): Live map that updates with pharmacy locations as soon as recommendations are generated.
+
+Real-time Interaction:
+
+Chatbot messages appear step-by-step, explaining reasoning and steps taken.
+
+Medicine names are clickable for more info.
+
+Map markers are clickable to get store details.
+
+4. Extra Features to Make the POC More Complete
+Multilingual Support (auto-detect language from browser or GPS location).
+
+Emergency Mode (quick link to nearest hospital or clinic).
+
+Offline Mode (cache last medicine list in case of poor internet).
+
+User Health Profile (optional, so recurring travelers can store allergy/medical history for faster recommendations).
+
+Safe Medicine Guide (educational section about local regulations and safe dosage).
+
+Privacy-First Design (no data sharing without consent).
