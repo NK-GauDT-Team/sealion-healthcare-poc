@@ -20,7 +20,7 @@ export default defineConfig({
         ]
       : []),
   ],
-  // base:"/sealion-healthcare-poc/",
+  base:"/sealion-healthcare-poc/",
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "client", "src"),

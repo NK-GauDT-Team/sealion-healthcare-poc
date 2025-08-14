@@ -114,7 +114,7 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
 
   const { data:pharmacies, isLoading } = useQuery({
     queryKey: ['pharmacies', SCRIPTED_LOCATION],
-    queryFn: async () => (await fetch(`/api/pharmacies?city=${SCRIPTED_LOCATION}`)).json(),
+    queryFn: async () => (await fetch(`${import.meta.env.BASE_URL}api/pharmacies?city=${SCRIPTED_LOCATION}`)).json(),
     enabled: true,
     refetchInterval: 30000,
     refetchOnMount: 'always',
@@ -382,7 +382,7 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
         </Card>
       )}
 
-      <style jsx>{`
+      <style>{`
         .pulse-animation {
           animation: pulse 2s infinite;
         }
