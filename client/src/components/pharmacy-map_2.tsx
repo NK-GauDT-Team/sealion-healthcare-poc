@@ -99,16 +99,24 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [medicineStep, isTransitioning]);
 
-  const { data: pharmacies, isLoading } = useQuery({
-    queryKey: ['/api/pharmacies', { country, city }],
-    queryFn: async () => {
-      const response = await fetch(`/api/pharmacies?city=${SCRIPTED_LOCATION}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch pharmacies');
-      }
-      return response.json();
-    },
-    enabled: medicineStep > 0 // Only fetch when a key has been pressed
+  // const { data: pharmacies, isLoading } = useQuery({
+  //   queryKey: ['/api/pharmacies', { country, city }],
+  //   queryFn: async () => {
+  //     const response = await fetch(`/api/pharmacies?city=${SCRIPTED_LOCATION}`);
+  //     if (!response.ok) {
+  //       throw new Error('Failed to fetch pharmacies');
+  //     }
+  //     return response.json();
+  //   },
+  //   enabled: medicineStep > 0 // Only fetch when a key has been pressed
+  // });
+  const { data:pharmacies, isLoading } = useQuery({
+    queryKey: ['pharmacies', SCRIPTED_LOCATION],
+    queryFn: async () => (await fetch(`/api/pharmacies?city=${SCRIPTED_LOCATION}`)).json(),
+    enabled: true,
+    refetchInterval: 30000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const calculateDistance = (lat1: string, lon1: string, lat2: string, lon2: string) => {

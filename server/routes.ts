@@ -91,6 +91,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const { city } = req.query;
       
+      console.log('City parameter:', city);
+
       if (!city) {
         return res.status(400).json({ error: "City parameter is required" });
       }
