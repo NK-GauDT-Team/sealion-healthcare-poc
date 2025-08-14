@@ -3,8 +3,16 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/navigation";
+// Chat Interface per User Journey
 import ChatInterface from "@/components/chat-interface";
+import ChatInterface2 from "@/components/chat-interface_2";
+import ChatInterface3 from "@/components/chat-interface_3";
+
+// Pharmacy Map per User Journey
 import PharmacyMap from "@/components/pharmacy-map";
+import PharmacyMap2 from "@/components/pharmacy-map_2";
+import PharmacyMap3 from "@/components/pharmacy-map_3";
+
 import myPhoto from "@assets/ai_medical_assisstant_pp.png";
 import { Link } from "wouter";
 import { 
@@ -280,10 +288,10 @@ export default function Home() {
             <TabsContent value="pharmacy" className="w-full">
               <div className="grid lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
-                  <ChatInterface />
+                  <ChatInterface2 />
                 </div>
                 <div>
-                  <PharmacyMap />
+                  <PharmacyMap2 />
                 </div>
               </div>
             </TabsContent>
@@ -291,10 +299,10 @@ export default function Home() {
             <TabsContent value="combined" className="w-full">
               <div className="grid lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2">
-                  <ChatInterface />
+                  <ChatInterface3 />
                 </div>
                 <div>
-                  <PharmacyMap />
+                  <PharmacyMap3 />
                 </div>
               </div>
             </TabsContent>

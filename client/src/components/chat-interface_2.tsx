@@ -219,7 +219,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             <Bot size={16} />
           </div>
           <div>
-            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (SEALION MCP TO PROVIDE LOCAL AND TRADITIONAL MEDICINE)</h3>
+            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (SEALION RAG EXTRACT PRESCRIPTIVE MEDICINE)</h3>
             <p className="text-xs opacity-75" data-testid="text-location">Online • Bangkok, Thailand</p>
           </div>
         </div>

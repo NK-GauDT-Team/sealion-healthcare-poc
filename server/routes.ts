@@ -89,18 +89,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get pharmacies endpoint
   app.get("/api/pharmacies", async (req, res) => {
     try {
-      const { country, city } = req.query;
+      const { city } = req.query;
       
-      let pharmacies;
-      if (country) {
-        pharmacies = await storage.getPharmaciesByLocation(
-          country as string, 
-          city as string
-        );
-      } else {
-        pharmacies = await storage.getPharmacies();
+      if (!city) {
+        return res.status(400).json({ error: "City parameter is required" });
       }
       
+      const pharmacies = await storage.getPharmaciesByCity(city as string);
       res.json(pharmacies);
     } catch (error) {
       console.error('Pharmacies API error:', error);

@@ -13,7 +13,7 @@ export interface IStorage {
   getMedicinesBySymptoms(symptoms: string): Promise<Medicine[]>;
   
   getPharmacies(): Promise<Pharmacy[]>;
-  getPharmaciesByLocation(country: string, city?: string): Promise<Pharmacy[]>;
+  getPharmaciesByCity(city: string): Promise<Pharmacy[]>;
 }
 
 export class MemStorage implements IStorage {
@@ -105,7 +105,47 @@ export class MemStorage implements IStorage {
       }
     ];
 
-    samplePharmacies.forEach(pharmacy => {
+    // Add Jakarta pharmacies
+    const jakartaPharmacies: Pharmacy[] = [
+      {
+        id: randomUUID(),
+        name: "Alfamart",
+        address: "Jakarta, Indonesia",
+        latitude: "-6.2088",
+        longitude: "106.8456",
+        country: "Indonesia",
+        city: "Jakarta",
+        phoneNumber: "+62-21-12345678",
+        openingHours: "24/7"
+      },
+      {
+        id: randomUUID(),
+        name: "Indomaret",
+        address: "Jakarta, Indonesia",
+        latitude: "-6.2088",
+        longitude: "106.8456",
+        country: "Indonesia",
+        city: "Jakarta",
+        phoneNumber: "+62-21-87654321",
+        openingHours: "6:00 AM - 10:00 PM"
+      },
+      {
+        id: randomUUID(),
+        name: "Guardian",
+        address: "Jakarta, Indonesia",
+        latitude: "-6.2088",
+        longitude: "106.8456",
+        country: "Indonesia",
+        city: "Jakarta",
+        phoneNumber: "+62-21-11223344",
+        openingHours: "8:00 AM - 9:00 PM"
+      }
+    ];
+
+    // Combine all pharmacies
+    const allPharmacies = [...samplePharmacies, ...jakartaPharmacies];
+    
+    allPharmacies.forEach(pharmacy => {
       this.pharmacies.set(pharmacy.id, pharmacy);
     });
   }
@@ -168,14 +208,10 @@ export class MemStorage implements IStorage {
     return Array.from(this.pharmacies.values());
   }
 
-  async getPharmaciesByLocation(country: string, city?: string): Promise<Pharmacy[]> {
-    return Array.from(this.pharmacies.values()).filter(pharmacy => {
-      if (city) {
-        return pharmacy.country.toLowerCase() === country.toLowerCase() && 
-               pharmacy.city.toLowerCase() === city.toLowerCase();
-      }
-      return pharmacy.country.toLowerCase() === country.toLowerCase();
-    });
+  async getPharmaciesByCity(city: string): Promise<Pharmacy[]> {
+    return Array.from(this.pharmacies.values()).filter(pharmacy => 
+      pharmacy.city.toLowerCase() === city.toLowerCase()
+    );
   }
 }
 
