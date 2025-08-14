@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Clock, Navigation } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+ 
 
 interface Pharmacy {
   id: string;
@@ -99,25 +99,56 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [medicineStep, isTransitioning]);
 
-  // const { data: pharmacies, isLoading } = useQuery({
-  //   queryKey: ['/api/pharmacies', { country, city }],
-  //   queryFn: async () => {
-  //     const response = await fetch(`/api/pharmacies?city=${SCRIPTED_LOCATION}`);
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch pharmacies');
-  //     }
-  //     return response.json();
-  //   },
-  //   enabled: medicineStep > 0 // Only fetch when a key has been pressed
-  // });
-  const { data:pharmacies, isLoading } = useQuery({
-    queryKey: ['pharmacies', SCRIPTED_LOCATION],
-    queryFn: async () => (await fetch(`${import.meta.env.BASE_URL}api/pharmacies?city=${SCRIPTED_LOCATION}`)).json(),
-    enabled: true,
-    refetchInterval: 30000,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-  });
+  // Local pharmacies (no API calls)
+  const LOCAL_PHARMACIES: Pharmacy[] = [
+    {
+      id: 'pharmacy-pharmacity',
+      name: 'Pharmacity',
+      address: '135 Nguyen Hue, District 1, Ho Chi Minh City',
+      latitude: '10.7741',
+      longitude: '106.7020',
+      country: 'Vietnam',
+      city: 'Ho Chi Minh City',
+      phoneNumber: '+84-28-3821-5555',
+      openingHours: '8:00 AM - 10:00 PM'
+    },
+    {
+      id: 'pharmacy-guardian-vn',
+      name: 'Guardian Vietnam',
+      address: 'Vincom Center, 72 Le Thanh Ton, District 1',
+      latitude: '10.7783',
+      longitude: '106.7019',
+      country: 'Vietnam',
+      city: 'Ho Chi Minh City',
+      phoneNumber: '+84-28-3936-9999',
+      openingHours: '9:00 AM - 10:00 PM'
+    },
+    {
+      id: 'pharmacy-long-chau',
+      name: 'Long Chau Pharmacy',
+      address: '230 Pasteur, District 3, Ho Chi Minh City',
+      latitude: '10.7850',
+      longitude: '106.6872',
+      country: 'Vietnam',
+      city: 'Ho Chi Minh City',
+      phoneNumber: '+84-1800-6928',
+      openingHours: '7:30 AM - 10:00 PM'
+    },
+    {
+      id: 'pharmacy-an-khang',
+      name: 'An Khang Pharmacy',
+      address: '45 Pham Ngoc Thach, District 3',
+      latitude: '10.7893',
+      longitude: '106.6950',
+      country: 'Vietnam',
+      city: 'Ho Chi Minh City',
+      phoneNumber: '+84-28-3820-8888',
+      openingHours: '24/7'
+    }
+  ];
+
+  const pharmacies: Pharmacy[] = LOCAL_PHARMACIES;
+  const isLoading = false;
 
   const calculateDistance = (lat1: string, lon1: string, lat2: string, lon2: string) => {
     // Simple distance calculation (Haversine formula approximation)
@@ -380,7 +411,7 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
         </Card>
       )}
 
-      <style jsx>{`
+      <style>{`
         .pulse-animation {
           animation: pulse 2s infinite;
         }

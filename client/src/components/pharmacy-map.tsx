@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Clock, Navigation } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+ 
 
 interface Pharmacy {
   id: string;
@@ -100,26 +100,45 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [medicineStep, isTransitioning]);
 
-  // const { data: pharmacies, isLoading } = useQuery({
-  //   queryKey: ['/api/pharmacies', { country, city }],
-  //   queryFn: async () => {
-  //     const response = await fetch(`/api/pharmacies?city=${SCRIPTED_LOCATION}`);
-  //     if (!response.ok) {
-  //       throw new Error('Failed to fetch pharmacies');
-  //     }
-  //     return response.json();
-  //   },
-  //   enabled: medicineStep > 0 // Only fetch when a key has been pressed
-  // });
+  // Local fallback pharmacies (no API calls)
+  const LOCAL_PHARMACIES: Pharmacy[] = [
+    {
+      id: 'pharmacy-alfamart',
+      name: 'Alfamart',
+      address: 'Jakarta, Indonesia',
+      latitude: '-6.2088',
+      longitude: '106.8456',
+      country: 'Indonesia',
+      city: 'Jakarta',
+      phoneNumber: '+62-21-12345678',
+      openingHours: '24/7'
+    },
+    {
+      id: 'pharmacy-indomaret',
+      name: 'Indomaret',
+      address: 'Jakarta, Indonesia',
+      latitude: '-6.2088',
+      longitude: '106.8456',
+      country: 'Indonesia',
+      city: 'Jakarta',
+      phoneNumber: '+62-21-87654321',
+      openingHours: '6:00 AM - 10:00 PM'
+    },
+    {
+      id: 'pharmacy-guardian',
+      name: 'Guardian',
+      address: 'Jakarta, Indonesia',
+      latitude: '-6.2088',
+      longitude: '106.8456',
+      country: 'Indonesia',
+      city: 'Jakarta',
+      phoneNumber: '+62-21-11223344',
+      openingHours: '8:00 AM - 9:00 PM'
+    }
+  ];
 
-  const { data:pharmacies, isLoading } = useQuery({
-    queryKey: ['pharmacies', SCRIPTED_LOCATION],
-    queryFn: async () => (await fetch(`${import.meta.env.BASE_URL}api/pharmacies?city=${SCRIPTED_LOCATION}`)).json(),
-    enabled: true,
-    refetchInterval: 30000,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-  });
+  const pharmacies: Pharmacy[] = LOCAL_PHARMACIES;
+  const isLoading = false;
   
   const calculateDistance = (lat1: string, lon1: string, lat2: string, lon2: string) => {
     // Simple distance calculation (Haversine formula approximation)
@@ -382,7 +401,7 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
         </Card>
       )}
 
-      <style jsx>{`
+      <style>{`
         .pulse-animation {
           animation: pulse 2s infinite;
         }

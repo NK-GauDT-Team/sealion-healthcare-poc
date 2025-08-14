@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Clock, Navigation } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+ 
 
 interface Pharmacy {
   id: string;
@@ -112,14 +112,56 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
   //   enabled: medicineStep > 0 // Only fetch when a key has been pressed
   // });
 
-  const { data:pharmacies, isLoading } = useQuery({
-    queryKey: ['pharmacies', SCRIPTED_LOCATION],
-    queryFn: async () => (await fetch(`${import.meta.env.BASE_URL}api/pharmacies?city=${SCRIPTED_LOCATION}`)).json(),
-    enabled: true,
-    refetchInterval: 30000,
-    refetchOnMount: 'always',
-    refetchOnWindowFocus: true,
-  });
+  // Local pharmacies (no API calls)
+  const LOCAL_PHARMACIES: Pharmacy[] = [
+    {
+      id: 'pharmacy-mercury-drug',
+      name: 'Mercury Drug',
+      address: 'Glorietta 2, Ayala Center, Makati City',
+      latitude: '14.5514',
+      longitude: '121.0244',
+      country: 'Philippines',
+      city: 'Manila',
+      phoneNumber: '+63-2-8893-5111',
+      openingHours: '7:00 AM - 11:00 PM'
+    },
+    {
+      id: 'pharmacy-watsons-ph',
+      name: 'Watsons Philippines',
+      address: 'SM Mall of Asia, Pasay City',
+      latitude: '14.5352',
+      longitude: '120.9821',
+      country: 'Philippines',
+      city: 'Manila',
+      phoneNumber: '+63-2-8556-0900',
+      openingHours: '10:00 AM - 10:00 PM'
+    },
+    {
+      id: 'pharmacy-rose',
+      name: 'Rose Pharmacy',
+      address: 'Greenhills Shopping Center, San Juan',
+      latitude: '14.6019',
+      longitude: '121.0355',
+      country: 'Philippines',
+      city: 'Manila',
+      phoneNumber: '+63-2-8721-1111',
+      openingHours: '9:00 AM - 9:00 PM'
+    },
+    {
+      id: 'pharmacy-generics',
+      name: 'The Generics Pharmacy',
+      address: "Robinson's Place Manila, Ermita",
+      latitude: '14.5795',
+      longitude: '120.9842',
+      country: 'Philippines',
+      city: 'Manila',
+      phoneNumber: '+63-2-8536-7878',
+      openingHours: '8:00 AM - 10:00 PM'
+    }
+  ];
+
+  const pharmacies: Pharmacy[] = LOCAL_PHARMACIES;
+  const isLoading = false;
 
   const calculateDistance = (lat1: string, lon1: string, lat2: string, lon2: string) => {
     // Simple distance calculation (Haversine formula approximation)
