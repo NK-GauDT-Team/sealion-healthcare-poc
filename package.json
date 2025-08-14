@@ -12,7 +12,8 @@
     "build_start": "npm run build && npm run start",
     "check": "tsc",
     "predeploy": "npm run build",
-    "deploy": "gh-pages -d dist/public",
+    "deployunused": "gh-pages -d dist/public",
+    "deploy": "gh-pages -d dist/public --branch gh-pages",
     "preview": "vite preview --port 8080"
   },
   "dependencies": {
