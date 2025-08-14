@@ -1,8 +1,16 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { fileURLToPath } from 'url';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const staticPath = path.join(__dirname, '../client/dist');
 
 const app = express();
+app.use(express.static(staticPath));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
