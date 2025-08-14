@@ -1,6 +1,7 @@
 {
   "name": "ID&E SEA LION HACKATHON HEALTHCARE",
-  "private":false,
+  "private": false,
+  "homepage": "https://nk-gaudt-team.github.io/sealion-healthcare-poc/",
   "version": "1.0.0",
   "type": "module",
   "license": "MIT",
@@ -57,6 +58,7 @@
     "express": "^4.21.2",
     "express-session": "^1.18.1",
     "framer-motion": "^11.13.1",
+    "gh-pages": "^6.3.0",
     "input-otp": "^1.4.2",
     "lucide-react": "^0.453.0",
     "memorystore": "^1.6.7",
