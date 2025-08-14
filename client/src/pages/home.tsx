@@ -1,9 +1,11 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import Navigation from "@/components/navigation";
 import ChatInterface from "@/components/chat-interface";
 import PharmacyMap from "@/components/pharmacy-map";
+import myPhoto from "@assets/ai_medical_assisstant_pp.png";
 import { Link } from "wouter";
 import { 
   MessageCircle, 
@@ -21,6 +23,7 @@ import {
   AlertTriangle,
   Stethoscope
 } from "lucide-react";
+
 
 export default function Home() {
   const handleScrollToSection = (sectionId: string) => {
@@ -84,7 +87,7 @@ export default function Home() {
             </div>
             <div className="relative">
               <img 
-                src="https://images.unsplash.com/photo-1559839734-2b71ea197ec2?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
+                src={myPhoto}
                 alt="Medical consultation online" 
                 className="rounded-2xl shadow-2xl w-full"
                 data-testid="img-hero-consultation"
@@ -149,7 +152,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Medicine Finder</h3>
                 <p className="text-medical-gray">
-                  Discover local alternatives to your regular medications with dosage and safety information.
+                  Find local prescription and alternative medicine options, with clear, safe dosage and usage guidance.
                 </p>
               </CardContent>
             </Card>
@@ -247,14 +250,55 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2">
-              <ChatInterface />
-            </div>
-            <div>
-              <PharmacyMap />
-            </div>
-          </div>
+          <Tabs defaultValue="chat" className="w-full">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
+              <TabsTrigger value="chat" className="text-base font-medium">
+                <MessageCircle className="mr-2 h-4 w-4" />
+                  User Journey #1
+              </TabsTrigger>
+              <TabsTrigger value="pharmacy" className="text-base font-medium">
+                <MapPin className="mr-2 h-4 w-4" />
+                  User Journey #2
+              </TabsTrigger>
+              <TabsTrigger value="combined" className="text-base font-medium">
+                <Bot className="mr-2 h-4 w-4" />
+                  User Journey #3
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="chat" className="w-full">
+              <div className="grid lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <ChatInterface />
+                </div>
+                <div>
+                  <PharmacyMap />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="pharmacy" className="w-full">
+              <div className="grid lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <ChatInterface />
+                </div>
+                <div>
+                  <PharmacyMap />
+                </div>
+              </div>
+            </TabsContent>
+            
+            <TabsContent value="combined" className="w-full">
+              <div className="grid lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2">
+                  <ChatInterface />
+                </div>
+                <div>
+                  <PharmacyMap />
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </div>
       </section>
 

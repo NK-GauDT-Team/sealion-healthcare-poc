@@ -1,12 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Loader2, Send, Bot, Shield, Clock } from "lucide-react";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
 
 interface ChatMessage {
   id: string;
@@ -21,6 +18,68 @@ interface ChatInterfaceProps {
   initialMessages?: ChatMessage[];
 }
 
+// Hardcoded scripted conversation
+const SCRIPTED_CONVERSATION = [
+  {
+    userMessage: "I have a headache and feel tired",
+    systemResponse: "I understand you're experiencing a headache and fatigue. These symptoms can have various causes. Can you tell me more about when this started and if you have any other symptoms?",
+    medicines: [
+      {
+        name: "Paracetamol 500mg",
+        description: "Pain reliever and fever reducer",
+        dosage: "Take 1-2 tablets every 4-6 hours, maximum 8 tablets per day"
+      },
+      {
+        name: "Ibuprofen 200mg",
+        description: "Anti-inflammatory pain reliever",
+        dosage: "Take 1-2 tablets every 6-8 hours with food"
+      }
+    ],
+    analysis: {
+      severity: "low",
+      analysis: "Your symptoms suggest common tension headache or mild fatigue. Rest and hydration are important.",
+      seekEmergencyCare: false
+    }
+  },
+  {
+    userMessage: "It started this morning and I also have a slight fever",
+    systemResponse: "Thank you for the additional information. A headache with fever and fatigue could indicate a viral infection or flu. It's important to monitor your temperature and stay hydrated.",
+    medicines: [
+      {
+        name: "Paracetamol 500mg",
+        description: "Fever reducer and pain reliever",
+        dosage: "Take 1-2 tablets every 4-6 hours for fever control"
+      },
+      {
+        name: "Oral Rehydration Salts",
+        description: "Electrolyte replacement",
+        dosage: "Mix 1 packet with 200ml water, drink slowly"
+      }
+    ],
+    analysis: {
+      severity: "medium",
+      analysis: "Fever with headache may indicate viral infection. Monitor temperature and seek care if symptoms worsen.",
+      seekEmergencyCare: false
+    }
+  },
+  {
+    userMessage: "Should I be worried? The fever is getting higher",
+    systemResponse: "If your fever is rising above 39°C (102.2°F) or if you develop severe symptoms like difficulty breathing, persistent vomiting, or severe headache, you should seek immediate medical attention. For now, continue with fever management and rest.",
+    medicines: [
+      {
+        name: "Paracetamol 500mg",
+        description: "Continue for fever control",
+        dosage: "Every 4-6 hours, alternate with ibuprofen if needed"
+      }
+    ],
+    analysis: {
+      severity: "medium",
+      analysis: "Rising fever requires monitoring. Seek medical care if temperature exceeds 39°C or if symptoms worsen significantly.",
+      seekEmergencyCare: false
+    }
+  }
+];
+
 export default function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
@@ -33,46 +92,68 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const { toast } = useToast();
+  const [conversationStep, setConversationStep] = useState(0);
+  const [awaitingInput, setAwaitingInput] = useState(false);
+  const [typingStep, setTypingStep] = useState(0);
 
-  const chatMutation = useMutation({
-    mutationFn: async (data: { symptoms: string; location?: string }) => {
-      const response = await apiRequest('POST', '/api/chat', data);
-      return response.json();
-    },
-    onSuccess: (data) => {
-      setIsTyping(false);
-      
-      // Add assistant response
-      const assistantMessage: ChatMessage = {
-        id: Date.now().toString(),
-        type: 'assistant',
-        content: data.analysis?.analysis || "I've analyzed your symptoms and found some recommendations.",
-        timestamp: new Date(),
-        medicines: data.medicines,
-        analysis: data.analysis
-      };
-      
-      setMessages(prev => [...prev, assistantMessage]);
-
-      if (data.analysis?.seekEmergencyCare) {
-        toast({
-          title: "Seek Emergency Care",
-          description: "Based on your symptoms, please consider visiting a healthcare professional immediately.",
-          variant: "destructive"
-        });
-      }
-    },
-    onError: (error) => {
-      setIsTyping(false);
-      toast({
-        title: "Error",
-        description: "Failed to analyze symptoms. Please try again.",
-        variant: "destructive"
-      });
-      console.error('Chat error:', error);
+  // Handle typing step rotation
+  useEffect(() => {
+    if (isTyping) {
+      const interval = setInterval(() => {
+        setTypingStep((prev) => (prev + 1) % 3);
+      }, 1000);
+      return () => clearInterval(interval);
+    } else {
+      setTypingStep(0);
     }
-  });
+  }, [isTyping]);
+
+  // Handle any key press to trigger scripted responses
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      if (conversationStep < SCRIPTED_CONVERSATION.length && !isTyping && !awaitingInput) {
+        triggerScriptedConversation();
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [conversationStep, isTyping, awaitingInput]);
+
+  const triggerScriptedConversation = () => {
+    if (conversationStep >= SCRIPTED_CONVERSATION.length) return;
+
+    const currentScript = SCRIPTED_CONVERSATION[conversationStep];
+    setAwaitingInput(true);
+
+    // Add user message
+    const userMessage: ChatMessage = {
+      id: `user-${Date.now()}`,
+      type: 'user',
+      content: currentScript.userMessage,
+      timestamp: new Date()
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setIsTyping(true);
+
+    // Simulate typing delay and add system response
+    setTimeout(() => {
+      const systemMessage: ChatMessage = {
+        id: `system-${Date.now()}`,
+        type: 'assistant',
+        content: currentScript.systemResponse,
+        timestamp: new Date(),
+        medicines: currentScript.medicines,
+        analysis: currentScript.analysis
+      };
+
+      setMessages(prev => [...prev, systemMessage]);
+      setIsTyping(false);
+      setConversationStep(prev => prev + 1);
+      setAwaitingInput(false);
+    }, 3000); // 3 second delay to show all typing steps
+  };
 
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
@@ -88,11 +169,18 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     setInputMessage("");
     setIsTyping(true);
 
-    // Call API
-    chatMutation.mutate({
-      symptoms: inputMessage,
-      location: "Bangkok, Thailand" // Could be determined by geolocation
-    });
+    // Simulate a generic response for manual inputs
+    setTimeout(() => {
+      const assistantMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: "Thank you for sharing that information. I'm analyzing your symptoms. For the scripted demonstration, please press any key to continue with the predefined conversation flow.",
+        timestamp: new Date()
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      setIsTyping(false);
+    }, 3000);
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -103,7 +191,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
   };
 
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg h-96 flex flex-col">
+    <div className="bg-white border border-gray-200 rounded-xl shadow-lg h-[600px] max-w-4xl w-full flex flex-col">
       {/* Chat Header */}
       <div className="bg-medical-blue text-white p-4 rounded-t-xl flex items-center justify-between">
         <div className="flex items-center space-x-3">
@@ -111,7 +199,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             <Bot size={16} />
           </div>
           <div>
-            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant</h3>
+            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (Local / Alternatives Medicine)</h3>
             <p className="text-xs opacity-75" data-testid="text-location">Online • Bangkok, Thailand</p>
           </div>
         </div>
@@ -171,7 +259,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
         ))}
 
         {/* Typing indicator */}
-        {(isTyping || chatMutation.isPending) && (
+        {isTyping && (
           <div className="flex items-start space-x-3">
             <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm">
               <Bot size={16} />
@@ -179,9 +267,35 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             <div className="bg-medical-light rounded-lg p-3 max-w-sm">
               <div className="flex items-center space-x-2 text-xs text-medical-gray">
                 <Loader2 className="w-3 h-3 animate-spin" />
-                <span data-testid="typing-indicator">Analyzing symptoms...</span>
+                <span data-testid="typing-indicator">
+                  {(() => {
+                    const steps = [
+                      "Translating the meaning",
+                      "Searching the local / traditional medicine nearby your area",
+                      "Found medicines..."
+                    ];
+                    return steps[typingStep];
+                  })()}
+                </span>
               </div>
             </div>
+          </div>
+        )}
+
+        {/* Instruction for scripted demo */}
+        {conversationStep < SCRIPTED_CONVERSATION.length && !isTyping && !awaitingInput && (
+          <div className="text-center py-2">
+            <p className="text-xs text-medical-gray bg-yellow-50 p-2 rounded-lg border border-yellow-200">
+              Press any key to continue the scripted conversation ({conversationStep + 1}/{SCRIPTED_CONVERSATION.length})
+            </p>
+          </div>
+        )}
+
+        {conversationStep >= SCRIPTED_CONVERSATION.length && !isTyping && (
+          <div className="text-center py-2">
+            <p className="text-xs text-medical-gray bg-green-50 p-2 rounded-lg border border-green-200">
+              Scripted conversation completed! You can now type your own messages.
+            </p>
           </div>
         )}
       </div>
@@ -191,21 +305,21 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
         <div className="flex items-center space-x-3">
           <Input
             type="text"
-            placeholder="Describe your symptoms..."
+            placeholder={conversationStep < SCRIPTED_CONVERSATION.length ? "Press any key for scripted demo..." : "Describe your symptoms..."}
             value={inputMessage}
             onChange={(e) => setInputMessage(e.target.value)}
             onKeyPress={handleKeyPress}
             className="flex-1"
-            disabled={chatMutation.isPending}
+            disabled={isTyping}
             data-testid="input-chat-message"
           />
           <Button
             onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || chatMutation.isPending}
+            disabled={!inputMessage.trim() || isTyping}
             className="bg-medical-blue hover:bg-medical-blue-dark"
             data-testid="button-send-message"
           >
-            {chatMutation.isPending ? (
+            {isTyping ? (
               <Loader2 className="w-4 h-4 animate-spin" />
             ) : (
               <Send size={16} />
