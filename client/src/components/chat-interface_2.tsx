@@ -22,78 +22,74 @@ interface ChatInterfaceProps {
 const SCRIPTED_CONVERSATION = [
   {
     // First script of discussion between User and System
-    userMessage: "My name is Alex, I'm from United Kingdom now visiting in Jakarta. I'd feel so bloated in my stomach, please recommend me a medicine.",
-    systemResponse: "🔎 Searched and found info from 10 trusted websites! 🌐\
-                          I understand you're experiencing a bloated in your stomach. \
-                          These symptoms can have various causes. \
-                          Can you tell me more about when this started and if you have any other symptoms?",
+    userMessage: "My name is Indra, I'm from Indonesia now visiting in Ho Chi Minh City, Vietnam. I usually take Tolak Angin for masuk angin but can't find it here. What's the similar clinical medicine here?",
+    systemResponse: "Querying GraphRAG pharmaceutical database for clinical alternatives...\
+                          Analyzing 2,341 drug profiles matching Tolak Angin's active compounds.\
+                          GraphRAG identified medications available in Vietnamese pharmacies with similar therapeutic effects.\
+                          Based on symptom clustering analysis: nausea, bloating, and fatigue management.",
     medicines: [
       {
-        name: "Tolak Angin",
-        description: "For colds with symptoms of bloating, nausea, stomach ache, dizziness, chills, and a dry throat.\
-                       Good for long journeys, fatigue, and sleep deprivation. To maintain/protect the immune system.",
-        dosage: "Drink one sachet every 3 hours."
+        name: "Domperidone 10mg (Motilium)",
+        description: "Anti-emetic medication for nausea and bloating. Available OTC in Vietnam. GraphRAG matched this based on digestive symptom relief profile similar to Tolak Angin's anti-nausea effects.",
+        dosage: "Take 1 tablet (10mg) 30 minutes before meals, 3 times daily"
       },
       {
-        name: "Antangin JRG Tablet",
-        description: "The ginger content in this product can treat colds and increase the body's resistance.",
-        dosage: "Take 1-2 tablets every 6-8 hours with food"
+        name: "Simethicone 40mg (Air-X)",
+        description: "Anti-flatulent medication for gas and bloating relief. GraphRAG correlation score: 78% for abdominal discomfort symptoms typically treated with Tolak Angin.",
+        dosage: "Take 1-2 tablets after meals and at bedtime as needed"
       }
     ],
     analysis: {
       severity: "low",
-      analysis: "Your symptoms suggest common tension headache or mild fatigue. Rest and hydration are important.",
+      analysis: "GraphRAG analysis suggests your 'masuk angin' symptoms correspond to functional dyspepsia in clinical terms. The recommended medications target specific symptoms.",
       seekEmergencyCare: false
     }
   },
   {
     // Second script of discussion between User and System
-    userMessage: "The bloating pain is getting worse, and I feel like I might vomit",
-    systemResponse: "🔎 Searched and found info from 3 trusted websites! 🌐 \
-                        Experiencing bloating along with nausea or vomiting can be uncomfortable. \
-                        Try to soothe your stomach with some herbal tea and rest.",
+    userMessage: "I took the Domperidone but still feel nauseous and now I have a headache too",
+    systemResponse: "GraphRAG updating treatment protocol based on symptom progression...\
+                        Analyzing 458 cases with similar non-responsive patterns to initial treatment.\
+                        GraphRAG suggests combination therapy approach available in Vietnamese pharmacies.",
     medicines: [
       {
-        name: "FreshCare Roll On",
-        description: "FreshCare is an aromatherapy oil that is effective in relieving symptoms of dizziness, \
-                        headaches, bloating, flu, or aches and pains that can occur when you catch a cold.",
-        usage: "Apply to your abdomen or under your nose."
+        name: "Metoclopramide 10mg (Primperan)",
+        description: "Stronger antiemetic that also helps with gastric motility. GraphRAG indicates 82% efficacy when Domperidone is insufficient.",
+        usage: "Take 1 tablet 30 minutes before meals, maximum 3 times daily"
       },
       {
-        name: "Wedang Jahe",
-        description: "This beverage is valued for its warming effects and a range of health benefits, \
-                        such as helping to relieve nausea and discomfort from bloating.",
-        dosage: "Mix 1 packet with 200ml water, drink slowly"
+        name: "Paracetamol 500mg (Panadol Extra)",
+        description: "For headache relief with added caffeine for better absorption. Widely available in Vietnam. Safe to combine with antiemetics.",
+        dosage: "Take 1-2 tablets every 4-6 hours as needed, maximum 8 tablets daily"
       }
     ],
     analysis: {
       severity: "medium",
-      analysis: "Fever with headache may indicate viral infection. Monitor temperature and seek care if symptoms worsen.",
+      analysis: "GraphRAG pattern recognition suggests possible gastroenteritis or food-related illness common in travelers. Monitor for dehydration.",
       seekEmergencyCare: false
     }
   },
   {
     // Third script of discussion between User and System
-    userMessage: "Is this something serious? I'm now experiencing a fever along with intense abdominal pain.",
-    systemResponse: "🔎 Searched and found info from 5 trusted websites! 🌐 \
-                        If your fever is rising above 39°C (102.2°F) or if you develop severe symptoms like difficulty breathing, \
-                        persistent vomiting, or severe abdominal pain, you should seek immediate medical attention. \
-                        For now, continue with fever management and rest.",
+    userMessage: "Is this something serious? I'm now experiencing fever and stomach cramps along with diarrhea.",
+    systemResponse: "GraphRAG severity assessment indicates escalation requiring clinical intervention...\
+                        Based on 1,892 traveler's diarrhea cases in database, your symptoms match acute gastroenteritis pattern.\
+                        Immediate pharmaceutical intervention recommended with rehydration therapy.",
     medicines: [
       {
-        name: "Paracetamol 500mg",
-        description: "Continue for fever control",
-        dosage: "Every 4-6 hours, alternate with ibuprofen if needed"
+        name: "Loperamide 2mg (Imodium)",
+        description: "Anti-diarrheal medication. GraphRAG recommends for symptom control while seeking medical care.",
+        dosage: "Take 2 tablets initially, then 1 after each loose stool, maximum 8 tablets daily"
       },
       {
-        name: "Panadol",
-        description: "This medication provides relief from fever and the accompanying headache.",
-        dosage: "Drink 1 tablet per day."
+        name: "ORS (Oresol) Sachets",
+        description: "Oral rehydration salts essential for preventing dehydration. Critical based on GraphRAG dehydration risk score: 7.2/10",
+        dosage: "Mix 1 sachet in 200ml water, drink after each bowel movement"
       }
     ],
     analysis: {
       severity: "medium",
-      analysis: "Rising fever requires monitoring. Seek medical care if temperature exceeds 39°C or if symptoms worsen significantly.",
+      analysis: "GraphRAG recommends visiting a clinic if symptoms persist beyond 24 hours. International clinics in HCMC: FV Hospital or Columbia Asia.",
       seekEmergencyCare: false
     }
   }
@@ -220,7 +216,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
           </div>
           <div>
             <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (SEALION RAG EXTRACT PRESCRIPTIVE MEDICINE)</h3>
-            <p className="text-xs opacity-75" data-testid="text-location">Online • Bangkok, Thailand</p>
+            <p className="text-xs opacity-75" data-testid="text-location">Online • Ho Chi Minh City, Vietnam</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">

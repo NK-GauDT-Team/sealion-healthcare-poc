@@ -22,23 +22,23 @@ interface PharmacyMapProps {
   city?: string;
   className?: string;
 }
-const SCRIPTED_LOCATION = 'Jakarta'
+const SCRIPTED_LOCATION = 'Manila'
 // Hardcoded scripted medicine changes
 const SCRIPTED_MEDICINES = [
   {
     step: 1,
     medicines: [
       {
-        name: "Tolak Angin",
-        dosage: "1 sachet • 3 times daily",
+        name: "Strepsils Lozenges",
+        dosage: "1 lozenge • Every 2-3 hours",
         availability: "Available",
-        description: "Traditional herbal medicine for cold and flu symptoms"
+        description: "Antiseptic throat lozenges for infection control"
       },
       {
-        name: "Antangin",
-        dosage: "1 tablet • 3 times daily",
+        name: "Lagundi Syrup",
+        dosage: "5-10ml • 3 times daily",
         availability: "Available",
-        description: "Herbal supplement for digestive and respiratory health"
+        description: "DOH-approved herbal cough and throat remedy"
       }
     ]
   },
@@ -46,16 +46,16 @@ const SCRIPTED_MEDICINES = [
     step: 2,
     medicines: [
       {
-        name: "Freshcare Roll on",
-        dosage: "Apply as needed",
+        name: "Amoxicillin 500mg",
+        dosage: "1 capsule • Every 8 hours",
         availability: "Available",
-        description: "Topical pain relief and aromatherapy"
+        description: "Antibiotic for bacterial throat infections"
       },
       {
-        name: "Wedang Jahe",
-        dosage: "1 sachet • Mix with hot water",
+        name: "Sambong Tea",
+        dosage: "1 tea bag • 3-4 times daily",
         availability: "Available",
-        description: "Instant ginger drink for warming and digestive health"
+        description: "Traditional antipyretic and anti-inflammatory tea"
       }
     ]
   },
@@ -63,16 +63,16 @@ const SCRIPTED_MEDICINES = [
     step: 3,
     medicines: [
       {
-        name: "Paracetamol 500mg",
-        dosage: "1-2 tablets • Max 4 times daily",
+        name: "Azithromycin 500mg",
+        dosage: "500mg • Once daily for 3 days",
         availability: "Available",
-        description: "Pain reliever and fever reducer"
+        description: "Macrolide antibiotic for severe tonsillitis"
       },
       {
-        name: "Panadol",
-        dosage: "1-2 tablets • Every 4-6 hours",
+        name: "Tawa-tawa Extract",
+        dosage: "5ml • Twice daily",
         availability: "Available",
-        description: "Paracetamol-based pain and fever relief"
+        description: "Immune-boosting traditional Filipino medicine"
       }
     ]
   }
@@ -126,8 +126,8 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
   };
 
   // Simulate user location (Bangkok city center)
-  const userLat = "13.7563";
-  const userLon = "100.5018";
+  const userLat = "14.5995";
+  const userLon = "120.9842";
 
   const pharmaciesWithDistance = (pharmacies && medicineStep > 0) 
     ? pharmacies.map((pharmacy: Pharmacy) => ({

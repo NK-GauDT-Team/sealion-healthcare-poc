@@ -142,8 +142,105 @@ export class MemStorage implements IStorage {
       }
     ];
 
+    // Add Vietnam pharmacy
+    const vietnamPharmacies: Pharmacy[] = [
+      {
+        id: randomUUID(),
+        name: "Pharmacity",
+        address: "135 Nguyen Hue, District 1, Ho Chi Minh City",
+        latitude: "10.7741",
+        longitude: "106.7020",
+        country: "Vietnam",
+        city: "Ho Chi Minh City",
+        phoneNumber: "+84-28-3821-5555",
+        openingHours: "8:00 AM - 10:00 PM"
+      },
+      {
+        id: randomUUID(),
+        name: "Guardian Vietnam",
+        address: "Vincom Center, 72 Le Thanh Ton, District 1",
+        latitude: "10.7783",
+        longitude: "106.7019",
+        country: "Vietnam",
+        city: "Ho Chi Minh City",
+        phoneNumber: "+84-28-3936-9999",
+        openingHours: "9:00 AM - 10:00 PM"
+      },
+      {
+        id: randomUUID(),
+        name: "Long Chau Pharmacy",
+        address: "230 Pasteur, District 3, Ho Chi Minh City",
+        latitude: "10.7850",
+        longitude: "106.6872",
+        country: "Vietnam",
+        city: "Ho Chi Minh City",
+        phoneNumber: "+84-1800-6928",
+        openingHours: "7:30 AM - 10:00 PM"
+      },
+      {
+        id: randomUUID(),
+        name: "An Khang Pharmacy",
+        address: "45 Pham Ngoc Thach, District 3",
+        latitude: "10.7893",
+        longitude: "106.6950",
+        country: "Vietnam",
+        city: "Ho Chi Minh City",
+        phoneNumber: "+84-28-3820-8888",
+        openingHours: "24/7"
+      }
+    ];
+
+
+    const manilaPharmacies: Pharmacy[] = [
+      {
+        id: randomUUID(),
+        name: "Mercury Drug",
+        address: "Glorietta 2, Ayala Center, Makati City",
+        latitude: "14.5514",
+        longitude: "121.0244",
+        country: "Philippines",
+        city: "Manila",
+        phoneNumber: "+63-2-8893-5111",
+        openingHours: "7:00 AM - 11:00 PM"
+      },
+      {
+        id: randomUUID(),
+        name: "Watsons Philippines",
+        address: "SM Mall of Asia, Pasay City",
+        latitude: "14.5352",
+        longitude: "120.9821",
+        country: "Philippines",
+        city: "Manila",
+        phoneNumber: "+63-2-8556-0900",
+        openingHours: "10:00 AM - 10:00 PM"
+      },
+      {
+        id: randomUUID(),
+        name: "Rose Pharmacy",
+        address: "Greenhills Shopping Center, San Juan",
+        latitude: "14.6019",
+        longitude: "121.0355",
+        country: "Philippines",
+        city: "Manila",
+        phoneNumber: "+63-2-8721-1111",
+        openingHours: "9:00 AM - 9:00 PM"
+      },
+      {
+        id: randomUUID(),
+        name: "The Generics Pharmacy",
+        address: "Robinson's Place Manila, Ermita",
+        latitude: "14.5795",
+        longitude: "120.9842",
+        country: "Philippines",
+        city: "Manila",
+        phoneNumber: "+63-2-8536-7878",
+        openingHours: "8:00 AM - 10:00 PM"
+      }
+    ];
+
+
     // Combine all pharmacies
-    const allPharmacies = [...samplePharmacies, ...jakartaPharmacies];
+    const allPharmacies = [...samplePharmacies, ...jakartaPharmacies, ...vietnamPharmacies, ...manilaPharmacies];
     
     allPharmacies.forEach(pharmacy => {
       this.pharmacies.set(pharmacy.id, pharmacy);

@@ -220,7 +220,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
           </div>
           <div>
             <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (SEALION MCP TO PROVIDE LOCAL AND TRADITIONAL MEDICINE)</h3>
-            <p className="text-xs opacity-75" data-testid="text-location">Online • Bangkok, Thailand</p>
+            <p className="text-xs opacity-75" data-testid="text-location">Online • Jakarta, Indonesia</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">

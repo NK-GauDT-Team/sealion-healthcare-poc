@@ -22,23 +22,22 @@ interface PharmacyMapProps {
   city?: string;
   className?: string;
 }
-const SCRIPTED_LOCATION = 'Jakarta'
-// Hardcoded scripted medicine changes
+const SCRIPTED_LOCATION = 'Ho Chi Minh City'
 const SCRIPTED_MEDICINES = [
   {
     step: 1,
     medicines: [
       {
-        name: "Tolak Angin",
-        dosage: "1 sachet • 3 times daily",
+        name: "Domperidone 10mg (Motilium)",
+        dosage: "1 tablet • 30 min before meals",
         availability: "Available",
-        description: "Traditional herbal medicine for cold and flu symptoms"
+        description: "Anti-emetic for nausea and bloating relief"
       },
       {
-        name: "Antangin",
-        dosage: "1 tablet • 3 times daily",
+        name: "Simethicone 40mg (Air-X)",
+        dosage: "1-2 tablets • After meals",
         availability: "Available",
-        description: "Herbal supplement for digestive and respiratory health"
+        description: "Anti-flatulent for gas and bloating"
       }
     ]
   },
@@ -46,16 +45,16 @@ const SCRIPTED_MEDICINES = [
     step: 2,
     medicines: [
       {
-        name: "Freshcare Roll on",
-        dosage: "Apply as needed",
+        name: "Metoclopramide 10mg (Primperan)",
+        dosage: "1 tablet • 30 min before meals",
         availability: "Available",
-        description: "Topical pain relief and aromatherapy"
+        description: "Stronger antiemetic for persistent nausea"
       },
       {
-        name: "Wedang Jahe",
-        dosage: "1 sachet • Mix with hot water",
+        name: "Paracetamol 500mg (Panadol Extra)",
+        dosage: "1-2 tablets • Every 4-6 hours",
         availability: "Available",
-        description: "Instant ginger drink for warming and digestive health"
+        description: "Pain relief with caffeine for better absorption"
       }
     ]
   },
@@ -63,16 +62,16 @@ const SCRIPTED_MEDICINES = [
     step: 3,
     medicines: [
       {
-        name: "Paracetamol 500mg",
-        dosage: "1-2 tablets • Max 4 times daily",
+        name: "Loperamide 2mg (Imodium)",
+        dosage: "2 tablets initially • Then 1 after each loose stool",
         availability: "Available",
-        description: "Pain reliever and fever reducer"
+        description: "Anti-diarrheal medication for symptom control"
       },
       {
-        name: "Panadol",
-        dosage: "1-2 tablets • Every 4-6 hours",
+        name: "ORS (Oresol) Sachets",
+        dosage: "1 sachet • Mix with 200ml water",
         availability: "Available",
-        description: "Paracetamol-based pain and fever relief"
+        description: "Oral rehydration salts for dehydration prevention"
       }
     ]
   }
@@ -126,8 +125,8 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
   };
 
   // Simulate user location (Bangkok city center)
-  const userLat = "13.7563";
-  const userLon = "100.5018";
+  const userLat = "10.7769";
+  const userLon = "106.7009";
 
   const pharmaciesWithDistance = (pharmacies && medicineStep > 0) 
     ? pharmacies.map((pharmacy: Pharmacy) => ({

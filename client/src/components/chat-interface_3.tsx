@@ -22,78 +22,74 @@ interface ChatInterfaceProps {
 const SCRIPTED_CONVERSATION = [
   {
     // First script of discussion between User and System
-    userMessage: "My name is Alex, I'm from United Kingdom now visiting in Jakarta. I'd feel so bloated in my stomach, please recommend me a medicine.",
-    systemResponse: "🔎 Searched and found info from 10 trusted websites! 🌐\
-                          I understand you're experiencing a bloated in your stomach. \
-                          These symptoms can have various causes. \
-                          Can you tell me more about when this started and if you have any other symptoms?",
+    userMessage: "My name is Jonathan, I'm from Singapore now visiting in Manila, Philippines. I have a really bad sore throat, please recommend me medicine.",
+    systemResponse: "Querying GraphRAG pharmaceutical database and searching local remedy knowledge base from trusted websites...\
+                          Analyzing 3,156 treatment profiles for pharyngitis symptoms.\
+                          GraphRAG identified both clinical medications and traditional Filipino remedies available in Manila.\
+                          Combining evidence-based medicine with local therapeutic options.",
     medicines: [
       {
-        name: "Tolak Angin",
-        description: "For colds with symptoms of bloating, nausea, stomach ache, dizziness, chills, and a dry throat.\
-                       Good for long journeys, fatigue, and sleep deprivation. To maintain/protect the immune system.",
-        dosage: "Drink one sachet every 3 hours."
+        name: "Strepsils Lozenges",
+        description: "Antiseptic lozenges containing amylmetacresol and dichlorobenzyl alcohol. GraphRAG efficacy score: 85% for bacterial throat infections.",
+        dosage: "Dissolve 1 lozenge slowly in mouth every 2-3 hours, maximum 12 daily"
       },
       {
-        name: "Antangin JRG Tablet",
-        description: "The ginger content in this product can treat colds and increase the body's resistance.",
-        dosage: "Take 1-2 tablets every 6-8 hours with food"
+        name: "Lagundi (Vitex negundo) Syrup",
+        description: "Filipino herbal medicine officially endorsed by DOH for cough and throat relief. Natural anti-inflammatory properties.",
+        dosage: "Take 5-10ml three times daily after meals"
       }
     ],
     analysis: {
       severity: "low",
-      analysis: "Your symptoms suggest common tension headache or mild fatigue. Rest and hydration are important.",
+      analysis: "GraphRAG analysis and trusted website source indicates viral pharyngitis pattern. Combined approach using antiseptic lozenges and herbal anti-inflammatory recommended.",
       seekEmergencyCare: false
     }
   },
   {
     // Second script of discussion between User and System
-    userMessage: "The bloating pain is getting worse, and I feel like I might vomit",
-    systemResponse: "🔎 Searched and found info from 3 trusted websites! 🌐 \
-                        Experiencing bloating along with nausea or vomiting can be uncomfortable. \
-                        Try to soothe your stomach with some herbal tea and rest.",
+    userMessage: "The throat pain is getting worse when I swallow and I'm starting to get fever",
+    systemResponse: "GraphRAG indepth search activated based on symptom progression with additional trusted source searches...\
+                        Cross-referencing 892 cases with dysphagia and pyrexia combination.\
+                        Recommending stronger prescription medications with traditional fever management.",
     medicines: [
       {
-        name: "FreshCare Roll On",
-        description: "FreshCare is an aromatherapy oil that is effective in relieving symptoms of dizziness, \
-                        headaches, bloating, flu, or aches and pains that can occur when you catch a cold.",
-        usage: "Apply to your abdomen or under your nose."
+        name: "Amoxicillin 500mg",
+        description: "Broad-spectrum antibiotic for bacterial throat infections. GraphRAG indicates 78% probability of streptococcal pharyngitis.",
+        usage: "Take 1 capsule every 8 hours for 7 days with food"
       },
       {
-        name: "Wedang Jahe",
-        description: "This beverage is valued for its warming effects and a range of health benefits, \
-                        such as helping to relieve nausea and discomfort from bloating.",
-        dosage: "Mix 1 packet with 200ml water, drink slowly"
+        name: "Sambong Tea (Blumea balsamifera)",
+        description: "Traditional Filipino medicinal tea with antipyretic properties. DOH-approved for fever reduction and anti-inflammatory effects.",
+        dosage: "Steep 1 tea bag in hot water, drink 3-4 times daily"
       }
     ],
     analysis: {
       severity: "medium",
-      analysis: "Fever with headache may indicate viral infection. Monitor temperature and seek care if symptoms worsen.",
+      analysis: "GraphRAG pattern suggests possible bacterial infection. Antibiotic therapy combined with traditional fever management recommended.",
       seekEmergencyCare: false
     }
   },
   {
     // Third script of discussion between User and System
-    userMessage: "Is this something serious? I'm now experiencing a fever along with intense abdominal pain.",
-    systemResponse: "🔎 Searched and found info from 5 trusted websites! 🌐 \
-                        If your fever is rising above 39°C (102.2°F) or if you develop severe symptoms like difficulty breathing, \
-                        persistent vomiting, or severe abdominal pain, you should seek immediate medical attention. \
-                        For now, continue with fever management and rest.",
+    userMessage: "Is this serious? I have white spots on my tonsils and my neck glands are swollen",
+    systemResponse: "GraphRAG diagnostic confidence: 91% for bacterial tonsillitis...\
+                        Analyzing 1,247 cases with tonsillar exudate and lymphadenopathy.\
+                        Immediate pharmaceutical intervention required with supportive traditional care.",
     medicines: [
       {
-        name: "Paracetamol 500mg",
-        description: "Continue for fever control",
-        dosage: "Every 4-6 hours, alternate with ibuprofen if needed"
+        name: "Azithromycin 500mg (Zithromax)",
+        description: "Macrolide antibiotic for penicillin-resistant strains. GraphRAG recommends for severe tonsillitis with visible exudate.",
+        dosage: "Take 500mg once daily for 3 days, preferably same time each day"
       },
       {
-        name: "Panadol",
-        description: "This medication provides relief from fever and the accompanying headache.",
-        dosage: "Drink 1 tablet per day."
+        name: "Tawa-tawa (Euphorbia hirta) Extract",
+        description: "Filipino traditional medicine with immune-boosting properties. Supports recovery and reduces inflammation naturally.",
+        dosage: "Take 5ml extract mixed with warm water, twice daily after meals"
       }
     ],
     analysis: {
       severity: "medium",
-      analysis: "Rising fever requires monitoring. Seek medical care if temperature exceeds 39°C or if symptoms worsen significantly.",
+      analysis: "GraphRAG confirms bacterial tonsillitis requiring antibiotics. Visit a clinic if symptoms don't improve in 48 hours. Manila clinics: Makati Medical Center or St. Luke's BGC.",
       seekEmergencyCare: false
     }
   }
@@ -220,7 +216,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
           </div>
           <div>
             <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (COMBINATION OF SEALION RAG AND MCP TO PROVIDE MODERN AND TRADITIONAL MEDICINE)</h3>
-            <p className="text-xs opacity-75" data-testid="text-location">Online • Bangkok, Thailand</p>
+            <p className="text-xs opacity-75" data-testid="text-location">Online • Manila, Philippines</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">

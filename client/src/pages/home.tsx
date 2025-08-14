@@ -40,6 +40,7 @@ export default function Home() {
       element.scrollIntoView({ behavior: 'smooth' });
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-white">
@@ -136,7 +137,7 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Symptom Analysis</h3>
                 <p className="text-medical-gray">
-                  Advanced AI understands your symptoms through natural conversation and provides preliminary assessments.
+                  SEALION LLM processes symptoms with medical precision, leveraging Southeast Asian healthcare patterns for accurate preliminary assessments.
                 </p>
               </CardContent>
             </Card>
@@ -172,7 +173,8 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Multilingual Support</h3>
                 <p className="text-medical-gray">
-                  Communicate in your preferred language with automatic translation capabilities.
+                  SEALION excels at Southeast Asian languages and cultural nuances, understanding local medical terms and traditional remedy contexts, 
+                  and allowing you to communicate in your preferred language with automatic translation capabilities.
                 </p>
               </CardContent>
             </Card>
@@ -217,7 +219,7 @@ export default function Home() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Analysis & Recommendations</h3>
                   <p className="text-medical-gray">
-                    Our AI analyzes your symptoms using trusted medical sources and provides preliminary recommendations.
+                    The AI made up of SEALION LLM analyzes symptoms using GraphRAG technology and Model Context Protocol , cross-referencing medical databases and trusted sites for evidence-based treatment recommendations with location awareness for clinics and convenient store..
                   </p>
                 </div>
               </div>
