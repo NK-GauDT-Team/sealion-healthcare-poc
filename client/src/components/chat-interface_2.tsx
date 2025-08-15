@@ -22,74 +22,74 @@ interface ChatInterfaceProps {
 const SCRIPTED_CONVERSATION = [
   {
     // First script of discussion between User and System
-    userMessage: "My name is Indra, I'm from Indonesia now visiting in Ho Chi Minh City, Vietnam. I usually take Tolak Angin for masuk angin but can't find it here. What's the similar clinical medicine here?",
-    systemResponse: "Querying GraphRAG pharmaceutical database for clinical alternatives...\
-                          Analyzing 2,341 drug profiles matching Tolak Angin's active compounds.\
-                          GraphRAG identified medications available in Vietnamese pharmacies with similar therapeutic effects.\
-                          Based on symptom clustering analysis: nausea, bloating, and fatigue management.",
+    userMessage: "Nama saya Indra, saya dari Indonesia dan sekarang sedang berkunjung ke Ho Chi Minh City, Vietnam. Saya biasanya minum Tolak Angin untuk masuk angin tapi tidak bisa menemukannya di sini. Apa obat klinis yang serupa di sini?",
+    systemResponse: "Mengquery database farmasi GraphRAG untuk alternatif klinis...\
+                          Menganalisis 2.341 profil obat yang cocok dengan senyawa aktif Tolak Angin.\
+                          GraphRAG mengidentifikasi obat-obatan yang tersedia di apotek Vietnam dengan efek terapeutik serupa.\
+                          Berdasarkan analisis pengelompokan gejala: manajemen mual, kembung, dan kelelahan.",
     medicines: [
       {
         name: "Domperidone 10mg (Motilium)",
-        description: "Anti-emetic medication for nausea and bloating. Available OTC in Vietnam. GraphRAG matched this based on digestive symptom relief profile similar to Tolak Angin's anti-nausea effects.",
-        dosage: "Take 1 tablet (10mg) 30 minutes before meals, 3 times daily"
+        description: "Obat anti-muntah untuk mual dan kembung. Tersedia tanpa resep di Vietnam. GraphRAG mencocokkan ini berdasarkan profil peredaan gejala pencernaan yang mirip dengan efek anti-mual Tolak Angin.",
+        dosage: "Minum 1 tablet (10mg) 30 menit sebelum makan, 3 kali sehari"
       },
       {
         name: "Simethicone 40mg (Air-X)",
-        description: "Anti-flatulent medication for gas and bloating relief. GraphRAG correlation score: 78% for abdominal discomfort symptoms typically treated with Tolak Angin.",
-        dosage: "Take 1-2 tablets after meals and at bedtime as needed"
+        description: "Obat anti-kembung untuk meredakan gas dan kembung. Skor korelasi GraphRAG: 78% untuk gejala ketidaknyamanan perut yang biasanya diobati dengan Tolak Angin.",
+        dosage: "Minum 1-2 tablet setelah makan dan sebelum tidur sesuai kebutuhan"
       }
     ],
     analysis: {
-      severity: "low",
-      analysis: "GraphRAG analysis suggests your 'masuk angin' symptoms correspond to functional dyspepsia in clinical terms. The recommended medications target specific symptoms.",
+      severity: "rendah",
+      analysis: "Analisis GraphRAG menunjukkan gejala 'masuk angin' Anda sesuai dengan dispepsia funktional dalam istilah klinis. Obat yang direkomendasikan menargetkan gejala spesifik.",
       seekEmergencyCare: false
     }
   },
   {
     // Second script of discussion between User and System
-    userMessage: "I took the Domperidone but still feel nauseous and now I have a headache too",
-    systemResponse: "GraphRAG updating treatment protocol based on symptom progression...\
-                        Analyzing 458 cases with similar non-responsive patterns to initial treatment.\
-                        GraphRAG suggests combination therapy approach available in Vietnamese pharmacies.",
+    userMessage: "Saya sudah minum Domperidone tapi masih merasa mual dan sekarang juga sakit kepala",
+    systemResponse: "GraphRAG memperbarui protokol pengobatan berdasarkan perkembangan gejala...\
+                        Menganalisis 458 kasus dengan pola tidak responsif serupa terhadap pengobatan awal.\
+                        GraphRAG menyarankan pendekatan terapi kombinasi yang tersedia di apotek Vietnam.",
     medicines: [
       {
         name: "Metoclopramide 10mg (Primperan)",
-        description: "Stronger antiemetic that also helps with gastric motility. GraphRAG indicates 82% efficacy when Domperidone is insufficient.",
-        usage: "Take 1 tablet 30 minutes before meals, maximum 3 times daily"
+        description: "Antiemetik yang lebih kuat yang juga membantu motilitas lambung. GraphRAG menunjukkan efektivitas 82% ketika Domperidone tidak cukup.",
+        usage: "Minum 1 tablet 30 menit sebelum makan, maksimal 3 kali sehari"
       },
       {
         name: "Paracetamol 500mg (Panadol Extra)",
-        description: "For headache relief with added caffeine for better absorption. Widely available in Vietnam. Safe to combine with antiemetics.",
-        dosage: "Take 1-2 tablets every 4-6 hours as needed, maximum 8 tablets daily"
+        description: "Untuk meredakan sakit kepala dengan tambahan kafein untuk penyerapan yang lebih baik. Tersedia luas di Vietnam. Aman dikombinasikan dengan antiemetik.",
+        dosage: "Minum 1-2 tablet setiap 4-6 jam sesuai kebutuhan, maksimal 8 tablet sehari"
       }
     ],
     analysis: {
-      severity: "medium",
-      analysis: "GraphRAG pattern recognition suggests possible gastroenteritis or food-related illness common in travelers. Monitor for dehydration.",
+      severity: "sedang",
+      analysis: "Pengenalan pola GraphRAG menunjukkan kemungkinan gastroenteritis atau penyakit terkait makanan yang umum pada pelancong. Pantau tanda-tanda dehidrasi.",
       seekEmergencyCare: false
     }
   },
   {
     // Third script of discussion between User and System
-    userMessage: "Is this something serious? I'm now experiencing fever and stomach cramps along with diarrhea.",
-    systemResponse: "GraphRAG severity assessment indicates escalation requiring clinical intervention...\
-                        Based on 1,892 traveler's diarrhea cases in database, your symptoms match acute gastroenteritis pattern.\
-                        Immediate pharmaceutical intervention recommended with rehydration therapy.",
+    userMessage: "Apakah ini sesuatu yang serius? Saya sekarang mengalami demam dan kram perut disertai diare.",
+    systemResponse: "Penilaian tingkat keparahan GraphRAG menunjukkan eskalasi yang memerlukan intervensi klinis...\
+                        Berdasarkan 1.892 kasus diare pelancong dalam database, gejala Anda cocok dengan pola gastroenteritis akut.\
+                        Intervensi farmasi segera direkomendasikan dengan terapi rehidrasi.",
     medicines: [
       {
         name: "Loperamide 2mg (Imodium)",
-        description: "Anti-diarrheal medication. GraphRAG recommends for symptom control while seeking medical care.",
-        dosage: "Take 2 tablets initially, then 1 after each loose stool, maximum 8 tablets daily"
+        description: "Obat anti-diare. GraphRAG merekomendasikan untuk mengontrol gejala sambil mencari perawatan medis.",
+        dosage: "Minum 2 tablet pada awalnya, lalu 1 setelah setiap buang air besar cair, maksimal 8 tablet sehari"
       },
       {
         name: "ORS (Oresol) Sachets",
-        description: "Oral rehydration salts essential for preventing dehydration. Critical based on GraphRAG dehydration risk score: 7.2/10",
-        dosage: "Mix 1 sachet in 200ml water, drink after each bowel movement"
+        description: "Garam rehidrasi oral yang penting untuk mencegah dehidrasi. Kritis berdasarkan skor risiko dehidrasi GraphRAG: 7.2/10",
+        dosage: "Campur 1 sachet dalam 200ml air, minum setelah setiap buang air besar"
       }
     ],
     analysis: {
-      severity: "medium",
-      analysis: "GraphRAG recommends visiting a clinic if symptoms persist beyond 24 hours. International clinics in HCMC: FV Hospital or Columbia Asia.",
+      severity: "sedang",
+      analysis: "GraphRAG merekomendasikan mengunjungi klinik jika gejala berlanjut lebih dari 24 jam. Klinik internasional di HCMC: FV Hospital atau Columbia Asia.",
       seekEmergencyCare: false
     }
   }
@@ -215,7 +215,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             <Bot size={16} />
           </div>
           <div>
-            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (SEALION RAG EXTRACT PRESCRIPTIVE MEDICINE)</h3>
+            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (SEALION Graph-RAG EXTRACT PRESCRIPTIVE MEDICINE)</h3>
             <p className="text-xs opacity-75" data-testid="text-location">Online • Ho Chi Minh City, Vietnam</p>
           </div>
         </div>
