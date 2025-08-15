@@ -105,8 +105,8 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
       id: 'pharmacy-pharmacity',
       name: 'Pharmacity',
       address: '135 Nguyen Hue, District 1, Ho Chi Minh City',
-      latitude: '10.7741',
-      longitude: '106.7020',
+      latitude: '10.7779', 
+      longitude: '106.7019',
       country: 'Vietnam',
       city: 'Ho Chi Minh City',
       phoneNumber: '+84-28-3821-5555',
@@ -116,8 +116,8 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
       id: 'pharmacy-guardian-vn',
       name: 'Guardian Vietnam',
       address: 'Vincom Center, 72 Le Thanh Ton, District 1',
-      latitude: '10.7783',
-      longitude: '106.7019',
+      latitude: '10.7759', 
+      longitude: '106.6999',
       country: 'Vietnam',
       city: 'Ho Chi Minh City',
       phoneNumber: '+84-28-3936-9999',
@@ -127,23 +127,12 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
       id: 'pharmacy-long-chau',
       name: 'Long Chau Pharmacy',
       address: '230 Pasteur, District 3, Ho Chi Minh City',
-      latitude: '10.7850',
-      longitude: '106.6872',
+      latitude: '10.7749', 
+      longitude: '106.7029',
       country: 'Vietnam',
       city: 'Ho Chi Minh City',
       phoneNumber: '+84-1800-6928',
       openingHours: '7:30 AM - 10:00 PM'
-    },
-    {
-      id: 'pharmacy-an-khang',
-      name: 'An Khang Pharmacy',
-      address: '45 Pham Ngoc Thach, District 3',
-      latitude: '10.7893',
-      longitude: '106.6950',
-      country: 'Vietnam',
-      city: 'Ho Chi Minh City',
-      phoneNumber: '+84-28-3820-8888',
-      openingHours: '24/7'
     }
   ];
 
