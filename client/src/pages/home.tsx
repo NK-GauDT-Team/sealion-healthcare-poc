@@ -56,8 +56,21 @@ export default function Home() {
                 <span className="text-medical-blue"> Anywhere in the World</span>
               </h1>
               <p className="text-xl text-medical-gray mb-8 leading-relaxed" data-testid="text-hero-description">
-                AI-powered medical assistance for travelers. Get instant symptom analysis, 
-                local medicine recommendations, and nearby pharmacy locations wherever you are.
+                AI-driven healthcare support for travelers who speaks in South Asian languages. Receive immediate health guidance, 
+                medicine recommendations, and local pharmacy locations wherever you are.{" "}
+                <br></br>
+                <br></br>
+                <span className="text-sm text-medical-gray font-bold" style={{ fontSize: "20px" }}>
+                  Powered by{" "}
+                  <a 
+                    href="https://docs.sea-lion.ai/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-medical-blue hover:text-medical-blue-dark underline font-medium"
+                  >
+                    SEALION
+                  </a>
+                </span>
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link href="/demo">
@@ -108,7 +121,7 @@ export default function Home() {
                     <span className="text-sm font-medium" data-testid="text-ai-active">AI Assistant Active</span>
                   </div>
                   <p className="text-xs text-medical-gray mt-1" data-testid="text-location-status">
-                    Analyzing symptoms in Bangkok, Thailand
+                    Analyzing symptoms in any Southeast Asian countries.
                   </p>
                 </CardContent>
               </Card>
@@ -137,19 +150,22 @@ export default function Home() {
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Symptom Analysis</h3>
                 <p className="text-medical-gray">
-                  SEALION LLM processes symptoms with medical precision, leveraging Southeast Asian healthcare patterns for accurate preliminary assessments.
+                  SEALION LLM processes symptoms with medical precision, leveraging Southeast Asian healthcare patterns 
+                  for accurate preliminary assessments.
                 </p>
               </CardContent>
             </Card>
             
-            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-location">
+            
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-language">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                  <MapPin className="text-white text-xl" />
+                  <Languages className="text-white text-xl" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Location-Aware Care</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Multilingual Support</h3>
                 <p className="text-medical-gray">
-                  Automatically finds medicines and healthcare options available in your current location.
+                  SEALION excels at Southeast Asian languages and cultural nuances, understanding local medical terms and traditional remedy contexts, 
+                  and allowing you to communicate in your preferred language with automatic translation capabilities.
                 </p>
               </CardContent>
             </Card>
@@ -166,15 +182,14 @@ export default function Home() {
               </CardContent>
             </Card>
             
-            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-language">
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-location">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                  <Languages className="text-white text-xl" />
+                  <MapPin className="text-white text-xl" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-3">Multilingual Support</h3>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Location-aware Care</h3>
                 <p className="text-medical-gray">
-                  SEALION excels at Southeast Asian languages and cultural nuances, understanding local medical terms and traditional remedy contexts, 
-                  and allowing you to communicate in your preferred language with automatic translation capabilities.
+                  Automatically finds medicines and healthcare options available in your current location.
                 </p>
               </CardContent>
             </Card>
@@ -209,7 +224,7 @@ export default function Home() {
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Describe Your Symptoms</h3>
                   <p className="text-medical-gray">
-                    Start a conversation with our AI assistant. Describe how you're feeling in natural language.
+                    Begin chatting with our AI assistant and share your symptoms in any Southeast Asian language.
                   </p>
                 </div>
               </div>
@@ -388,7 +403,7 @@ export default function Home() {
                 <span className="text-xl font-semibold" data-testid="text-footer-brand">Personal Medical Assistant</span>
               </div>
               <p className="text-gray-400 mb-4 max-w-md" data-testid="text-footer-description">
-                AI-powered medical assistance for travelers worldwide. Get instant health support, 
+                AI-driven healthcare support for travelers who speaks in South Asian languages. Receive immediate health guidance, 
                 medicine recommendations, and local pharmacy locations wherever you are.
               </p>
               <Link href="/demo">
@@ -421,7 +436,7 @@ export default function Home() {
           
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
             <p className="text-gray-400 text-sm" data-testid="text-copyright">
-              © 2024 Personal Medical Assistant. All rights reserved.
+              © 2025 Personal Medical Assistant. All rights reserved. Muhammad Iskandar and Shem Lim.
             </p>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               <div className="flex items-center space-x-2 text-sm text-gray-400">
