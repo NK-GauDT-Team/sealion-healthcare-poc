@@ -22,74 +22,74 @@ interface ChatInterfaceProps {
 const SCRIPTED_CONVERSATION = [
   {
     // First script of discussion between User and System
-    userMessage: "My name is Jonathan, I'm from Singapore now visiting in Manila, Philippines. I have a really bad sore throat, please recommend me medicine.",
-    systemResponse: "Querying GraphRAG pharmaceutical database and searching local remedy knowledge base from trusted websites...\
-                          Analyzing 3,156 treatment profiles for pharyngitis symptoms.\
-                          GraphRAG identified both clinical medications and traditional Filipino remedies available in Manila.\
-                          Combining evidence-based medicine with local therapeutic options.",
+    userMessage: "Tên tôi là Jonathan, tôi đến từ Vietnam và hiện đang thăm Manila, Philippines. Tôi bị đau họng rất nặng, xin vui lòng giới thiệu thuốc cho tôi.",
+    systemResponse: "Đang truy vấn cơ sở dữ liệu dược phẩm GraphRAG và tìm kiếm cơ sở kiến thức về phương thuốc địa phương từ các trang web đáng tin cậy...\
+                          Phân tích 3.156 hồ sơ điều trị cho các triệu chứng viêm họng.\
+                          GraphRAG đã xác định cả thuốc lâm sàng và các phương thuốc truyền thống Philippines có sẵn ở Manila.\
+                          Kết hợp y học dựa trên bằng chứng với các lựa chọn điều trị địa phương.",
     medicines: [
       {
-        name: "Strepsils Lozenges",
-        description: "Antiseptic lozenges containing amylmetacresol and dichlorobenzyl alcohol. GraphRAG efficacy score: 85% for bacterial throat infections.",
-        dosage: "Dissolve 1 lozenge slowly in mouth every 2-3 hours, maximum 12 daily"
+        name: "Viên ngậm Strepsils",
+        description: "Viên ngậm sát trùng chứa amylmetacresol và dichlorobenzyl alcohol. Điểm hiệu quả GraphRAG: 85% cho nhiễm trùng họng do vi khuẩn.",
+        dosage: "Ngậm từ từ 1 viên trong miệng mỗi 2-3 giờ, tối đa 12 viên mỗi ngày"
       },
       {
-        name: "Lagundi (Vitex negundo) Syrup",
-        description: "Filipino herbal medicine officially endorsed by DOH for cough and throat relief. Natural anti-inflammatory properties.",
-        dosage: "Take 5-10ml three times daily after meals"
+        name: "Siro Lagundi (Vitex negundo)",
+        description: "Thuốc thảo dược Philippines được Bộ Y tế chính thức phê duyệt để điều trị ho và đau họng. Có tính chất chống viêm tự nhiên.",
+        dosage: "Uống 5-10ml ba lần mỗi ngày sau bữa ăn"
       }
     ],
     analysis: {
-      severity: "low",
-      analysis: "GraphRAG analysis and trusted website source indicates viral pharyngitis pattern. Combined approach using antiseptic lozenges and herbal anti-inflammatory recommended.",
+      severity: "thấp",
+      analysis: "Phân tích GraphRAG và nguồn trang web đáng tin cậy chỉ ra mô hình viêm họng do virus. Khuyến nghị phương pháp kết hợp sử dụng viên ngậm sát trùng và thảo dược chống viêm.",
       seekEmergencyCare: false
     }
   },
   {
     // Second script of discussion between User and System
-    userMessage: "The throat pain is getting worse when I swallow and I'm starting to get fever",
-    systemResponse: "GraphRAG indepth search activated based on symptom progression with additional trusted source searches...\
-                        Cross-referencing 892 cases with dysphagia and pyrexia combination.\
-                        Recommending stronger prescription medications with traditional fever management.",
+    userMessage: "Cơn đau họng đang trở nên tệ hơn khi tôi nuốt và tôi bắt đầu bị sốt",
+    systemResponse: "GraphRAG kích hoạt tìm kiếm sâu dựa trên diễn biến triệu chứng với các tìm kiếm nguồn đáng tin cậy bổ sung...\
+                        Tham chiếu chéo 892 trường hợp với sự kết hợp khó nuốt và sốt.\
+                        Khuyến nghị thuốc theo toa mạnh hơn với quản lý sốt truyền thống.",
     medicines: [
       {
         name: "Amoxicillin 500mg",
-        description: "Broad-spectrum antibiotic for bacterial throat infections. GraphRAG indicates 78% probability of streptococcal pharyngitis.",
-        usage: "Take 1 capsule every 8 hours for 7 days with food"
+        description: "Kháng sinh phổ rộng cho nhiễm trùng họng do vi khuẩn. GraphRAG chỉ ra xác suất 78% mắc viêm họng liên cầu khuẩn.",
+        usage: "Uống 1 viên nang mỗi 8 giờ trong 7 ngày cùng với thức ăn"
       },
       {
-        name: "Sambong Tea (Blumea balsamifera)",
-        description: "Traditional Filipino medicinal tea with antipyretic properties. DOH-approved for fever reduction and anti-inflammatory effects.",
-        dosage: "Steep 1 tea bag in hot water, drink 3-4 times daily"
+        name: "Trà Sambong (Blumea balsamifera)",
+        description: "Trà thuốc truyền thống Philippines có đặc tính hạ sốt. Được Bộ Y tế phê duyệt để giảm sốt và chống viêm.",
+        dosage: "Pha 1 túi trà trong nước nóng, uống 3-4 lần mỗi ngày"
       }
     ],
     analysis: {
-      severity: "medium",
-      analysis: "GraphRAG pattern suggests possible bacterial infection. Antibiotic therapy combined with traditional fever management recommended.",
+      severity: "trung bình",
+      analysis: "Mô hình GraphRAG gợi ý khả năng nhiễm trùng vi khuẩn. Khuyến nghị liệu pháp kháng sinh kết hợp với quản lý sốt truyền thống.",
       seekEmergencyCare: false
     }
   },
   {
     // Third script of discussion between User and System
-    userMessage: "Is this serious? I have white spots on my tonsils and my neck glands are swollen",
-    systemResponse: "GraphRAG diagnostic confidence: 91% for bacterial tonsillitis...\
-                        Analyzing 1,247 cases with tonsillar exudate and lymphadenopathy.\
-                        Immediate pharmaceutical intervention required with supportive traditional care.",
+    userMessage: "Điều này có nghiêm trọng không? Tôi có những đốm trắng trên amidan và các tuyến ở cổ bị sưng",
+    systemResponse: "Độ tin cậy chẩn đoán GraphRAG: 91% cho viêm amidan do vi khuẩn...\
+                        Phân tích 1.247 trường hợp với dịch tiết amidan và sưng hạch bạch huyết.\
+                        Cần can thiệp dược phẩm ngay lập tức với chăm sóc truyền thống hỗ trợ.",
     medicines: [
       {
         name: "Azithromycin 500mg (Zithromax)",
-        description: "Macrolide antibiotic for penicillin-resistant strains. GraphRAG recommends for severe tonsillitis with visible exudate.",
-        dosage: "Take 500mg once daily for 3 days, preferably same time each day"
+        description: "Kháng sinh macrolide cho các chủng kháng penicillin. GraphRAG khuyến nghị cho viêm amidan nặng có dịch tiết rõ ràng.",
+        dosage: "Uống 500mg một lần mỗi ngày trong 3 ngày, tốt nhất là cùng giờ mỗi ngày"
       },
       {
-        name: "Tawa-tawa (Euphorbia hirta) Extract",
-        description: "Filipino traditional medicine with immune-boosting properties. Supports recovery and reduces inflammation naturally.",
-        dosage: "Take 5ml extract mixed with warm water, twice daily after meals"
+        name: "Cao chiết Tawa-tawa (Euphorbia hirta)",
+        description: "Thuốc truyền thống Philippines có đặc tính tăng cường miễn dịch. Hỗ trợ phục hồi và giảm viêm tự nhiên.",
+        dosage: "Uống 5ml cao chiết pha với nước ấm, hai lần mỗi ngày sau bữa ăn"
       }
     ],
     analysis: {
-      severity: "medium",
-      analysis: "GraphRAG confirms bacterial tonsillitis requiring antibiotics. Visit a clinic if symptoms don't improve in 48 hours. Manila clinics: Makati Medical Center or St. Luke's BGC.",
+      severity: "trung bình",
+      analysis: "GraphRAG xác nhận viêm amidan do vi khuẩn cần kháng sinh. Hãy đến phòng khám nếu các triệu chứng không cải thiện trong 48 giờ. Các phòng khám ở Manila: Trung tâm Y tế Makati hoặc St. Luke's BGC.",
       seekEmergencyCare: false
     }
   }
@@ -215,7 +215,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             <Bot size={16} />
           </div>
           <div>
-            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (COMBINATION OF SEALION RAG AND MCP TO PROVIDE MODERN AND TRADITIONAL MEDICINE)</h3>
+            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (COMBINATION OF SEALION Graph-RAG AND MCP TO PROVIDE MODERN AND TRADITIONAL MEDICINE)</h3>
             <p className="text-xs opacity-75" data-testid="text-location">Online • Manila, Philippines</p>
           </div>
         </div>
