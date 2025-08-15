@@ -118,45 +118,34 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
       id: 'pharmacy-mercury-drug',
       name: 'Mercury Drug',
       address: 'Glorietta 2, Ayala Center, Makati City',
-      latitude: '14.5514',
-      longitude: '121.0244',
+      latitude: '14.5596', 
+      longitude: '121.0245',
       country: 'Philippines',
       city: 'Manila',
       phoneNumber: '+63-2-8893-5111',
       openingHours: '7:00 AM - 11:00 PM'
     },
     {
-      id: 'pharmacy-watsons-ph',
-      name: 'Watsons Philippines',
-      address: 'SM Mall of Asia, Pasay City',
-      latitude: '14.5352',
-      longitude: '120.9821',
+      id: 'convenience-7eleven',
+      name: '7-Eleven',
+      address: 'Ayala Triangle Gardens, Makati City',
+      latitude: '14.5597', 
+      longitude: '121.0246',
       country: 'Philippines',
       city: 'Manila',
-      phoneNumber: '+63-2-8556-0900',
-      openingHours: '10:00 AM - 10:00 PM'
+      phoneNumber: '+63-2-8536-7777',
+      openingHours: '24/7'
     },
     {
-      id: 'pharmacy-rose',
-      name: 'Rose Pharmacy',
-      address: 'Greenhills Shopping Center, San Juan',
-      latitude: '14.6019',
-      longitude: '121.0355',
+      id: 'pharmacy-watsons-ph',
+      name: 'Watsons',
+      address: 'Greenbelt 3, Makati City',
+      latitude: '14.5598',
+      longitude: '121.0247',
       country: 'Philippines',
       city: 'Manila',
       phoneNumber: '+63-2-8721-1111',
-      openingHours: '9:00 AM - 9:00 PM'
-    },
-    {
-      id: 'pharmacy-generics',
-      name: 'The Generics Pharmacy',
-      address: "Robinson's Place Manila, Ermita",
-      latitude: '14.5795',
-      longitude: '120.9842',
-      country: 'Philippines',
-      city: 'Manila',
-      phoneNumber: '+63-2-8536-7878',
-      openingHours: '8:00 AM - 10:00 PM'
+      openingHours: '10:00 AM - 10:00 PM'
     }
   ];
 
@@ -177,8 +166,8 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
   };
 
   // Simulate user location (Bangkok city center)
-  const userLat = "14.5995";
-  const userLon = "120.9842";
+  const userLat = "14.5595";
+  const userLon = "121.0244";
 
   const pharmaciesWithDistance = (pharmacies && medicineStep > 0) 
     ? pharmacies.map((pharmacy: Pharmacy) => ({

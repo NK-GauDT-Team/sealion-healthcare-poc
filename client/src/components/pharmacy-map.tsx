@@ -105,9 +105,9 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
     {
       id: 'pharmacy-alfamart',
       name: 'Alfamart',
-      address: 'Jakarta, Indonesia',
-      latitude: '-6.2088',
-      longitude: '106.8456',
+      address: 'Jl. Thamrin No.9, Jakarta Pusat',
+      latitude: '-6.2078', 
+      longitude: '106.8466',
       country: 'Indonesia',
       city: 'Jakarta',
       phoneNumber: '+62-21-12345678',
@@ -116,9 +116,9 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
     {
       id: 'pharmacy-indomaret',
       name: 'Indomaret',
-      address: 'Jakarta, Indonesia',
-      latitude: '-6.2088',
-      longitude: '106.8456',
+      address: 'Jl. Sudirman Kav.10, Jakarta Selatan',
+      latitude: '-6.2098', 
+      longitude: '106.8446',
       country: 'Indonesia',
       city: 'Jakarta',
       phoneNumber: '+62-21-87654321',
@@ -127,9 +127,9 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
     {
       id: 'pharmacy-guardian',
       name: 'Guardian',
-      address: 'Jakarta, Indonesia',
-      latitude: '-6.2088',
-      longitude: '106.8456',
+      address: 'Grand Indonesia Mall, Jakarta Pusat',
+      latitude: '-6.2058', 
+      longitude: '106.8476',
       country: 'Indonesia',
       city: 'Jakarta',
       phoneNumber: '+62-21-11223344',
@@ -153,9 +153,9 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
     return distance;
   };
 
-  // Simulate user location (Bangkok city center)
-  const userLat = "13.7563";
-  const userLon = "100.5018";
+  // Simulate user location (Jakarta)
+  const userLat = "-6.2088";   
+  const userLon = "106.8456";  
 
   const pharmaciesWithDistance = (pharmacies && medicineStep > 0) 
     ? pharmacies.map((pharmacy: Pharmacy) => ({
