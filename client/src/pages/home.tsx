@@ -14,6 +14,8 @@ import PharmacyMap2 from "@/components/pharmacy-map_2";
 import PharmacyMap3 from "@/components/pharmacy-map_3";
 
 import myPhoto from "@assets/ai_medical_assisstant_pp.png";
+import SEALIONPHOTO from "@assets/sealion-llm.png";
+
 import { Link } from "wouter";
 import { 
   MessageCircle, 
@@ -60,15 +62,20 @@ export default function Home() {
                 medicine recommendations, and local pharmacy locations wherever you are.{" "}
                 <br></br>
                 <br></br>
-                <span className="text-sm text-medical-gray font-bold" style={{ fontSize: "20px" }}>
+                <span className="text-sm text-medical-gray font-bold flex items-center" style={{ fontSize: "20px" }}>
                   Powered by{" "}
                   <a 
                     href="https://docs.sea-lion.ai/" 
                     target="_blank" 
                     rel="noopener noreferrer"
-                    className="text-medical-blue hover:text-medical-blue-dark underline font-medium"
+                    className="text-medical-blue hover:text-medical-blue-dark underline font-medium flex items-center ml-1"
                   >
-                    SEALION
+                    SEALION-LLM
+                    <img 
+                      src={SEALIONPHOTO} 
+                      alt="SEALION LLM" 
+                      style={{ height: "45px", marginLeft: "8px", display: "inline-block", verticalAlign: "middle" }} 
+                    />
                   </a>
                 </span>
               </p>
