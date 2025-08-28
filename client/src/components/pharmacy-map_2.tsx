@@ -3,7 +3,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { MapPin, Phone, Clock, Navigation } from "lucide-react";
- 
 
 interface Pharmacy {
   id: string;
@@ -17,406 +16,280 @@ interface Pharmacy {
   openingHours?: string;
 }
 
+interface MedicineDisplay {
+  name: string;
+  dosage: string;
+  availability: string;
+  description: string;
+}
+
 interface PharmacyMapProps {
   country?: string;
   city?: string;
   className?: string;
+  medicines?: Array<{
+    name: string;
+    dosage?: string;
+    description: string;
+    localAvailability?: string;
+  }>;
 }
-const SCRIPTED_LOCATION = 'Ho Chi Minh City'
-const SCRIPTED_MEDICINES = [
-  {
-    step: 1,
-    medicines: [
-      {
-        name: "Domperidone 10mg (Motilium)",
-        dosage: "1 tablet • 30 min before meals",
-        availability: "Available",
-        description: "Anti-emetic for nausea and bloating relief"
-      },
-      {
-        name: "Simethicone 40mg (Air-X)",
-        dosage: "1-2 tablets • After meals",
-        availability: "Available",
-        description: "Anti-flatulent for gas and bloating"
-      }
-    ]
-  },
-  {
-    step: 2,
-    medicines: [
-      {
-        name: "Metoclopramide 10mg (Primperan)",
-        dosage: "1 tablet • 30 min before meals",
-        availability: "Available",
-        description: "Stronger antiemetic for persistent nausea"
-      },
-      {
-        name: "Paracetamol 500mg (Panadol Extra)",
-        dosage: "1-2 tablets • Every 4-6 hours",
-        availability: "Available",
-        description: "Pain relief with caffeine for better absorption"
-      }
-    ]
-  },
-  {
-    step: 3,
-    medicines: [
-      {
-        name: "Loperamide 2mg (Imodium)",
-        dosage: "2 tablets initially • Then 1 after each loose stool",
-        availability: "Available",
-        description: "Anti-diarrheal medication for symptom control"
-      },
-      {
-        name: "ORS (Oresol) Sachets",
-        dosage: "1 sachet • Mix with 200ml water",
-        availability: "Available",
-        description: "Oral rehydration salts for dehydration prevention"
-      }
-    ]
-  }
-];
 
-export default function PharmacyMap({ country = "Thailand", city = "Bangkok", className = "" }: PharmacyMapProps) {
-  const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
-  const [medicineStep, setMedicineStep] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+// Default location if none provided
+const DEFAULT_LOCATION = 'Ho Chi Minh City';
 
-  // Handle keydown events to trigger medicine changes
+export default function PharmacyMap({ 
+  country = "Vietnam", 
+  city = DEFAULT_LOCATION, 
+  className = "",
+  medicines = []
+}: PharmacyMapProps) {
+  const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedPharmacy, setSelectedPharmacy] = useState<string | null>(null);
+  const [displayMedicines, setDisplayMedicines] = useState<MedicineDisplay[]>([]);
+  
+  // Convert medicines from chat format to display format
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (medicineStep < SCRIPTED_MEDICINES.length && !isTransitioning) {
-        setIsTransitioning(true);
-        
-        setTimeout(() => {
-          setMedicineStep(prev => prev + 1);
-          setIsTransitioning(false);
-        }, 4000); // Brief transition animation
+    if (medicines && medicines.length > 0) {
+      const formattedMedicines = medicines.map(med => ({
+        name: med.name,
+        dosage: med.dosage || 'As directed',
+        availability: med.localAvailability || 'Check availability',
+        description: med.description
+      }));
+      setDisplayMedicines(formattedMedicines);
+    }
+  }, [medicines]);
+
+  // Fetch pharmacies when location changes
+  useEffect(() => {
+    const fetchPharmacies = async () => {
+      setLoading(true);
+      try {
+        const response = await fetch(`/api/pharmacies?city=${encodeURIComponent(city)}`);
+        if (response.ok) {
+          const data = await response.json();
+          setPharmacies(data);
+        } else {
+          // Use default pharmacies if API fails
+          setPharmacies(getDefaultPharmacies(city));
+        }
+      } catch (error) {
+        console.error('Error fetching pharmacies:', error);
+        // Use default pharmacies on error
+        setPharmacies(getDefaultPharmacies(city));
+      } finally {
+        setLoading(false);
       }
     };
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [medicineStep, isTransitioning]);
+    fetchPharmacies();
+  }, [city]);
 
-  // Local pharmacies (no API calls)
-  const LOCAL_PHARMACIES: Pharmacy[] = [
-    {
-      id: 'pharmacy-pharmacity',
-      name: 'Pharmacity',
-      address: '135 Nguyen Hue, District 1, Ho Chi Minh City',
-      latitude: '10.7779', 
-      longitude: '106.7019',
-      country: 'Vietnam',
-      city: 'Ho Chi Minh City',
-      phoneNumber: '+84-28-3821-5555',
-      openingHours: '8:00 AM - 10:00 PM'
-    },
-    {
-      id: 'pharmacy-guardian-vn',
-      name: 'Guardian Vietnam',
-      address: 'Vincom Center, 72 Le Thanh Ton, District 1',
-      latitude: '10.7759', 
-      longitude: '106.6999',
-      country: 'Vietnam',
-      city: 'Ho Chi Minh City',
-      phoneNumber: '+84-28-3936-9999',
-      openingHours: '9:00 AM - 10:00 PM'
-    },
-    {
-      id: 'pharmacy-long-chau',
-      name: 'Long Chau Pharmacy',
-      address: '230 Pasteur, District 3, Ho Chi Minh City',
-      latitude: '10.7749', 
-      longitude: '106.7029',
-      country: 'Vietnam',
-      city: 'Ho Chi Minh City',
-      phoneNumber: '+84-1800-6928',
-      openingHours: '7:30 AM - 10:00 PM'
-    }
-  ];
+  // Default pharmacies for major cities
+  const getDefaultPharmacies = (cityName: string): Pharmacy[] => {
+    const defaultData: Record<string, Pharmacy[]> = {
+      'Ho Chi Minh City': [
+        {
+          id: '1',
+          name: 'Pharmacity HCMC',
+          address: '123 Nguyen Hue, District 1',
+          latitude: '10.7769',
+          longitude: '106.7009',
+          country: 'Vietnam',
+          city: 'Ho Chi Minh City',
+          phoneNumber: '+84 28 3822 0000',
+          openingHours: '8:00 AM - 10:00 PM'
+        },
+        {
+          id: '2',
+          name: 'Guardian Vietnam',
+          address: '456 Le Loi, District 1',
+          latitude: '10.7720',
+          longitude: '106.6980',
+          country: 'Vietnam',
+          city: 'Ho Chi Minh City',
+          phoneNumber: '+84 28 3823 1111',
+          openingHours: '9:00 AM - 9:00 PM'
+        },
+        {
+          id: '3',
+          name: 'Long Chau Pharmacy',
+          address: '789 Tran Hung Dao, District 5',
+          latitude: '10.7550',
+          longitude: '106.6750',
+          country: 'Vietnam',
+          city: 'Ho Chi Minh City',
+          phoneNumber: '+84 28 3835 2222',
+          openingHours: '7:30 AM - 10:30 PM'
+        }
+      ],
+      'Manila': [
+        {
+          id: '1',
+          name: 'Mercury Drug Makati',
+          address: 'Ayala Avenue, Makati City',
+          latitude: '14.5565',
+          longitude: '121.0244',
+          country: 'Philippines',
+          city: 'Manila',
+          phoneNumber: '+63 2 8893 0000',
+          openingHours: '24 Hours'
+        },
+        {
+          id: '2',
+          name: 'Watsons BGC',
+          address: 'Bonifacio High Street, Taguig',
+          latitude: '14.5507',
+          longitude: '121.0509',
+          country: 'Philippines',
+          city: 'Manila',
+          phoneNumber: '+63 2 8847 1111',
+          openingHours: '9:00 AM - 10:00 PM'
+        },
+        {
+          id: '3',
+          name: 'Rose Pharmacy',
+          address: 'Ermita, Manila',
+          latitude: '14.5826',
+          longitude: '120.9845',
+          country: 'Philippines',
+          city: 'Manila',
+          phoneNumber: '+63 2 8524 2222',
+          openingHours: '8:00 AM - 9:00 PM'
+        }
+      ]
+    };
 
-  const pharmacies: Pharmacy[] = LOCAL_PHARMACIES;
-  const isLoading = false;
-
-  const calculateDistance = (lat1: string, lon1: string, lat2: string, lon2: string) => {
-    // Simple distance calculation (Haversine formula approximation)
-    const R = 6371; // Earth's radius in km
-    const dLat = (parseFloat(lat2) - parseFloat(lat1)) * Math.PI / 180;
-    const dLon = (parseFloat(lon2) - parseFloat(lon1)) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(parseFloat(lat1) * Math.PI / 180) * Math.cos(parseFloat(lat2) * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-    return distance;
+    return defaultData[cityName] || defaultData['Ho Chi Minh City'];
   };
 
-  // Simulate user location (Bangkok city center)
-  const userLat = "10.7769";
-  const userLon = "106.7009";
-
-  const pharmaciesWithDistance = (pharmacies && medicineStep > 0) 
-    ? pharmacies.map((pharmacy: Pharmacy) => ({
-        ...pharmacy,
-        distance: calculateDistance(userLat, userLon, pharmacy.latitude, pharmacy.longitude)
-      })).sort((a: any, b: any) => a.distance - b.distance)
-    : [];
-
-  // Get current medicines to display
-  const currentMedicines = medicineStep > 0 && medicineStep <= SCRIPTED_MEDICINES.length 
-    ? SCRIPTED_MEDICINES[medicineStep - 1].medicines 
-    : [];
-
-  if (isLoading) {
-    return (
-      <div className={`space-y-6 ${className}`}>
-        <div className="animate-pulse">
-          <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  const handleNavigation = (pharmacy: Pharmacy) => {
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.latitude},${pharmacy.longitude}`;
+    window.open(url, '_blank');
+  };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Medicine Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-lg" data-testid="text-medicine-recommendations">
-            <div className="flex items-center">
-              <MapPin className="text-medical-blue mr-2" size={20} />
+    <div className={`space-y-4 ${className}`}>
+      {/* Recommended Medicines Panel */}
+      <Card className="shadow-lg">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center">
+              <MapPin className="mr-2" size={20} />
               Recommended Medicines
-            </div>
-            {/* {medicineStep > 0 && (
-              <Badge variant="outline" className="text-xs">
-                Step {medicineStep}/3
-              </Badge>
-            )} */}
-          </CardTitle>
+            </CardTitle>
+            <Badge variant="outline" className="text-xs">
+              {city}
+            </Badge>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className={`space-y-3 transition-opacity duration-500 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-            {currentMedicines.map((medicine, index) => (
-              <div key={`${medicineStep}-${index}`} className="border border-gray-200 rounded-lg p-3" data-testid={`medicine-card-${index}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-sm">{medicine.name}</span>
-                  <Badge 
-                    className={`text-white ${
-                      medicine.availability === 'Available' 
-                        ? 'bg-medical-success' 
-                        : medicine.availability === 'Prescription' 
-                          ? 'bg-medical-warning' 
-                          : 'bg-medical-blue'
-                    }`} 
-                    data-testid={`badge-${medicine.availability.toLowerCase()}`}
-                  >
-                    {medicine.availability}
-                  </Badge>
+          {displayMedicines.length > 0 ? (
+            <div className="space-y-3">
+              {displayMedicines.map((medicine, idx) => (
+                <div key={idx} className="bg-medical-light p-3 rounded-lg">
+                  <div className="flex justify-between items-start mb-1">
+                    <h4 className="font-semibold text-sm">{medicine.name}</h4>
+                    <Badge 
+                      variant="default"
+                      className="text-xs bg-green-100 text-green-800"
+                    >
+                      {medicine.availability}
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-medical-gray mb-1">{medicine.description}</p>
+                  <p className="text-xs font-medium text-medical-blue">{medicine.dosage}</p>
                 </div>
-                <p className="text-xs text-medical-gray">{medicine.dosage}</p>
-                <p className="text-xs text-medical-gray">{medicine.description}</p>
-                {/* <p className="text-xs text-medical-blue mt-1">
-                  {medicineStep > 0 
-                    ? `Found at ${pharmaciesWithDistance.length} nearby locations`
-                    : 'Press any key to find nearby locations'
-                  }
-                </p> */}
-              </div>
-            ))}
-          </div>
-
-          {/* Instruction for initial state */}
-          {medicineStep === 0 && (
-            <div className="mt-4 text-center">
-              {/* <p className="text-xs text-medical-gray bg-blue-50 p-3 rounded-lg border border-blue-200">
-                Press any key to start finding medicines and nearby pharmacies
-              </p> */}
+              ))}
             </div>
-          )}
-
-          {/* Instruction for scripted demo */}
-          {/* {medicineStep < SCRIPTED_MEDICINES.length && medicineStep > 0 && !isTransitioning && (
-            <div className="mt-4 text-center">
-              <p className="text-xs text-medical-gray bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-                Press any key to see next medicine recommendations ({medicineStep + 1}/{SCRIPTED_MEDICINES.length})
-              </p>
-            </div>
-          )} */}
-
-          {medicineStep >= SCRIPTED_MEDICINES.length && (
-            <div className="mt-4 text-center">
-              <p className="text-xs text-medical-gray bg-green-50 p-2 rounded-lg border border-green-200">
-                All medicine recommendations completed!
-              </p>
+          ) : (
+            <div className="text-center py-8 text-medical-gray">
+              <p className="text-sm">No medicines recommended yet.</p>
+              <p className="text-xs mt-2">Describe your symptoms to get recommendations.</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Interactive Map - Only show when medicines are active */}
-      {medicineStep > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg" data-testid="text-nearby-pharmacies">
-              <MapPin className="text-medical-blue mr-2" size={20} />
-              Nearby Pharmacies
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {/* Map container with pharmacy locations */}
-            <div className="h-64 relative bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg overflow-hidden">
-              {/* Map background - using CSS to simulate map */}
-              <div className="absolute inset-0 opacity-20">
-                <div className="w-full h-full bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100"></div>
-                <div className="absolute top-0 left-0 w-full h-full">
-                  {/* Street lines simulation */}
-                  <div className="absolute top-1/3 left-0 w-full h-0.5 bg-gray-300 transform -rotate-12"></div>
-                  <div className="absolute top-2/3 left-0 w-full h-0.5 bg-gray-300 transform rotate-12"></div>
-                  <div className="absolute left-1/3 top-0 w-0.5 h-full bg-gray-300 transform rotate-12"></div>
-                  <div className="absolute left-2/3 top-0 w-0.5 h-full bg-gray-300 transform -rotate-12"></div>
-                </div>
-              </div>
-
-              {/* User location marker */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-lg pulse-animation"></div>
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs bg-white px-2 py-1 rounded shadow-md whitespace-nowrap">
-                  Your Location
-                </div>
-              </div>
-
-              {/* Pharmacy markers */}
-              {pharmaciesWithDistance.slice(0, 3).map((pharmacy: any, index: number) => {
-                const positions = [
-                  { top: '30%', left: '60%' }, // Boots Pharmacy
-                  { top: '65%', left: '35%' }, // Watsons
-                  { top: '40%', left: '75%' }, // Fascino Pharmacy
-                ];
-                
-                return (
-                  <div
-                    key={pharmacy.id}
-                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 ${
-                      selectedPharmacy?.id === pharmacy.id ? 'scale-110' : ''
-                    }`}
-                    style={positions[index]}
-                    onClick={() => setSelectedPharmacy(pharmacy)}
-                    data-testid={`pharmacy-marker-${index}`}
-                  >
-                    <div className="w-6 h-6 bg-medical-blue rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                      <MapPin size={12} className="text-white" />
+      {/* Nearby Pharmacies */}
+      <Card className="shadow-lg">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center">
+            <MapPin className="mr-2" size={20} />
+            Nearby Pharmacies
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-medical-blue mx-auto"></div>
+              <p className="text-sm text-medical-gray mt-4">Loading pharmacies...</p>
+            </div>
+          ) : (
+            <div className="space-y-3">
+              {pharmacies.map((pharmacy) => (
+                <div
+                  key={pharmacy.id}
+                  className={`border rounded-lg p-3 cursor-pointer transition-all ${
+                    selectedPharmacy === pharmacy.id 
+                      ? 'border-medical-blue bg-medical-light' 
+                      : 'border-gray-200 hover:border-medical-blue/50'
+                  }`}
+                  onClick={() => setSelectedPharmacy(pharmacy.id)}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <h4 className="font-semibold text-sm">{pharmacy.name}</h4>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-6 px-2"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleNavigation(pharmacy);
+                      }}
+                    >
+                      <Navigation size={14} className="mr-1" />
+                      <span className="text-xs">Navigate</span>
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-1 text-xs text-medical-gray">
+                    <div className="flex items-center">
+                      <MapPin size={12} className="mr-2 flex-shrink-0" />
+                      {pharmacy.address}
                     </div>
-                    {selectedPharmacy?.id === pharmacy.id && (
-                      <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 bg-white p-2 rounded-lg shadow-lg border min-w-48 z-30">
-                        <h4 className="font-semibold text-sm">{pharmacy.name}</h4>
-                        <p className="text-xs text-gray-600">{pharmacy.address}</p>
-                        <p className="text-xs text-medical-blue">{pharmacy.distance.toFixed(1)} km away</p>
-                        <div className="flex space-x-2 mt-2">
-                          <Button size="sm" className="text-xs px-2 py-1" data-testid={`button-directions-${index}`}>
-                            Directions
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-xs px-2 py-1" data-testid={`button-call-${index}`}>
-                            Call
-                          </Button>
-                        </div>
+                    
+                    {pharmacy.phoneNumber && (
+                      <div className="flex items-center">
+                        <Phone size={12} className="mr-2 flex-shrink-0" />
+                        {pharmacy.phoneNumber}
+                      </div>
+                    )}
+                    
+                    {pharmacy.openingHours && (
+                      <div className="flex items-center">
+                        <Clock size={12} className="mr-2 flex-shrink-0" />
+                        {pharmacy.openingHours}
                       </div>
                     )}
                   </div>
-                );
-              })}
-
-              {/* Map legend */}
-              <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 text-xs">
-                <div className="space-y-1" data-testid="map-legend">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-medical-blue rounded-full"></div>
-                    <span>Pharmacy</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span>Your Location</span>
-                  </div>
                 </div>
-              </div>
+              ))}
             </div>
-
-            {/* Pharmacy list */}
-            <div className="p-4 border-t">
-              <div className="space-y-3">
-                {pharmaciesWithDistance.slice(0, 3).map((pharmacy: any, index: number) => (
-                  <div
-                    key={pharmacy.id}
-                    className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedPharmacy?.id === pharmacy.id ? 'border-medical-blue bg-blue-50' : ''
-                    }`}
-                    onClick={() => setSelectedPharmacy(pharmacy)}
-                    data-testid={`pharmacy-list-item-${index}`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-sm">{pharmacy.name}</h4>
-                        <p className="text-xs text-gray-600 mt-1">{pharmacy.address}</p>
-                        <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                          {pharmacy.phoneNumber && (
-                            <div className="flex items-center space-x-1">
-                              <Phone size={10} />
-                              <span>{pharmacy.phoneNumber}</span>
-                            </div>
-                          )}
-                          {pharmacy.openingHours && (
-                            <div className="flex items-center space-x-1">
-                              <Clock size={10} />
-                              <span>{pharmacy.openingHours}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="outline" className="text-xs">
-                          {pharmacy.distance.toFixed(1)} km
-                        </Badge>
-                        <div className="mt-2 flex space-x-1">
-                          <Button size="sm" variant="outline" className="text-xs px-2 py-1" data-testid={`button-directions-list-${index}`}>
-                            <Navigation size={10} />
-                          </Button>
-                          {pharmacy.phoneNumber && (
-                            <Button size="sm" variant="outline" className="text-xs px-2 py-1" data-testid={`button-call-list-${index}`}>
-                              <Phone size={10} />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          )}
+          
+          {/* Interactive Map Placeholder */}
+          <div className="mt-4 bg-gray-100 rounded-lg h-48 flex items-center justify-center">
+            <div className="text-center">
+              <MapPin className="mx-auto text-medical-blue mb-2" size={32} />
+              <p className="text-sm text-medical-gray">Interactive map view</p>
+              <p className="text-xs text-gray-500 mt-1">Click a pharmacy to see on map</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
-
-      <style>{`
-        .pulse-animation {
-          animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-          }
-          70% {
-            box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-          }
-        }
-      `}</style>
+          </div>
+        </CardContent>
+      </Card>
     </div>
   );
 }
