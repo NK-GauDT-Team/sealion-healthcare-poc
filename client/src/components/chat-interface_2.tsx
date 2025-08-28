@@ -17,6 +17,13 @@ interface Analysis {
   seekEmergencyCare: boolean;
 }
 
+interface UiLabels {
+  recommended?: string;   // heading for recommended meds
+  dosage?: string;        // label before dosage
+  availability?: string;  // availability phrase/pill
+  emergency?: string;     // short emergency warning
+}
+
 interface ChatMessage {
   id: string;
   type: "user" | "assistant" | "system";
@@ -24,6 +31,8 @@ interface ChatMessage {
   timestamp: Date;
   medicines?: MedicineRecommendation[];
   analysis?: Analysis;
+  uiLabels?: UiLabels;
+  language?: string | null;
 }
 
 interface ChatInterface2Props {
@@ -163,12 +172,9 @@ export default function ChatInterface2({
         wsRef.current.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log("Received WebSocket message:", data);
-
             const rawType = (data?.type ?? "").toString().toLowerCase();
             const isResponseLike = ["response", "medical_response", "analysis", "result"].includes(rawType);
 
-            // Stop the typing indicator for anything that isn't a pure ping
             if (rawType !== "status" && rawType !== "connection") {
               setIsTyping(false);
             }
@@ -178,10 +184,7 @@ export default function ChatInterface2({
               return;
             }
 
-            if (rawType === "status") {
-              // optional: show transient statuses in UI if you want
-              return;
-            }
+            if (rawType === "status") return;
 
             if (rawType === "error") {
               setMessages((prev) => [
@@ -196,50 +199,13 @@ export default function ChatInterface2({
               return;
             }
 
-            // Handle normal responses
             if (isResponseLike) {
-              // Some backends send JSON string in data.message
               let parsedFromMessage: any | null = null;
               if (typeof data.message === "string" && data.message.trim().startsWith("{")) {
-                try {
-                  parsedFromMessage = JSON.parse(data.message);
-                } catch {
-                  // ignore parse error; will treat as plain text
-                }
+                try { parsedFromMessage = JSON.parse(data.message); } catch {}
               }
 
-              // Medicines
-              let medicines: MedicineRecommendation[] = [];
-              const sourceMeds =
-                (Array.isArray(data.medicines) && data.medicines) ||
-                (parsedFromMessage?.medicines && Array.isArray(parsedFromMessage.medicines) && parsedFromMessage.medicines) ||
-                [];
-              medicines = sourceMeds.map((m: any) => ({
-                name: m?.name ?? "",
-                dosage: m?.dosage ?? "",
-                description: m?.description ?? "",
-                localAvailability: m?.localAvailability ?? "Check availability",
-              }));
-
-              if (medicines.length > 0 && onMedicinesUpdate) {
-                onMedicinesUpdate(medicines);
-              }
-
-              // Location passthrough
-              const loc = data.location || parsedFromMessage?.location;
-              if (loc && onLocationUpdate) {
-                onLocationUpdate(loc);
-              }
-
-              // Severity / analysis
-              const severityRaw =
-                (parsedFromMessage?.severity ?? data?.severity ?? "low").toString().toLowerCase();
-              const severity: Analysis["severity"] =
-                severityRaw === "high" ? "high" : severityRaw === "medium" ? "medium" : "low";
-
-              const seekEmergencyCare =
-                Boolean(parsedFromMessage?.seekEmergencyCare) || Boolean(data?.seekEmergencyCare);
-
+              // Text to display in the bubble
               const analysisText =
                 (typeof parsedFromMessage?.analysis === "string" && parsedFromMessage.analysis) ||
                 (typeof parsedFromMessage?.disclaimer === "string" && parsedFromMessage.disclaimer) ||
@@ -247,20 +213,47 @@ export default function ChatInterface2({
                 (typeof data?.disclaimer === "string" && data.disclaimer) ||
                 "";
 
+              const displayMessage: string =
+                (typeof data.message === "string" && data.message) || analysisText || "Analysis complete.";
+
+              // severity
+              const severityRaw =
+                (parsedFromMessage?.severity ?? data?.severity ?? "low").toString().toLowerCase();
+              const severity: Analysis["severity"] =
+                severityRaw === "high" ? "high" : severityRaw === "medium" ? "medium" : "low";
+              const seekEmergencyCare =
+                Boolean(parsedFromMessage?.seekEmergencyCare) || Boolean(data?.seekEmergencyCare);
+
+              // localized UI labels from backend
+              const uiLabels: UiLabels | undefined =
+                (parsedFromMessage?.uiLabels as UiLabels) || (data?.uiLabels as UiLabels);
+
+              // optional language code
+              const language: string | null =
+                (parsedFromMessage?.language as string) || (data?.language as string) || null;
+
+              // medicines (preserve localAvailability from backend; fallback uses uiLabels.availability)
+              const sourceMeds =
+                (Array.isArray(data.medicines) && data.medicines) ||
+                (parsedFromMessage?.medicines && Array.isArray(parsedFromMessage.medicines) && parsedFromMessage.medicines) ||
+                [];
+              const fallbackAvail = uiLabels?.availability || "Check availability";
+              const medicines: MedicineRecommendation[] = sourceMeds.map((m: any) => ({
+                name: m?.name ?? "",
+                dosage: m?.dosage ?? "",
+                description: m?.description ?? "",
+                localAvailability: m?.localAvailability ?? fallbackAvail,
+              }));
+
+              if (medicines.length > 0 && onMedicinesUpdate) onMedicinesUpdate(medicines);
+
+              const loc = (data as any).location || parsedFromMessage?.location;
+              if (loc && onLocationUpdate) onLocationUpdate(loc);
+
               const analysisData: Analysis | undefined =
                 severity || analysisText || seekEmergencyCare
-                  ? {
-                      severity,
-                      analysis: analysisText,
-                      seekEmergencyCare,
-                    }
+                  ? { severity, analysis: analysisText, seekEmergencyCare }
                   : undefined;
-
-              // Display text preference: message -> analysis/disclaimer -> fallback
-              const displayMessage: string =
-                (typeof data.message === "string" && data.message) ||
-                analysisText ||
-                "Analysis complete.";
 
               setMessages((prev) => [
                 ...prev,
@@ -271,6 +264,8 @@ export default function ChatInterface2({
                   timestamp: new Date(),
                   medicines,
                   analysis: analysisData,
+                  uiLabels,
+                  language,
                 },
               ]);
 
@@ -309,7 +304,6 @@ export default function ChatInterface2({
           setConnectionStatus("Disconnected - Reconnecting...");
           setIsTyping(false);
 
-          // prevent stacked timers
           if (!reconnectTimeoutRef.current) {
             reconnectTimeoutRef.current = setTimeout(() => {
               reconnectTimeoutRef.current = null;
@@ -331,9 +325,7 @@ export default function ChatInterface2({
         clearTimeout(reconnectTimeoutRef.current);
         reconnectTimeoutRef.current = null;
       }
-      if (wsRef.current) {
-        wsRef.current.close();
-      }
+      if (wsRef.current) wsRef.current.close();
     };
   }, [websocketUrl, onMedicinesUpdate, onLocationUpdate]);
 
@@ -352,13 +344,7 @@ export default function ChatInterface2({
     setIsTyping(true);
 
     if (wsRef.current?.readyState === WebSocket.OPEN) {
-      wsRef.current.send(
-        JSON.stringify({
-          type: "query",
-          message: inputMessage,
-          // If your backend needs language, add it here; otherwise omit.
-        })
-      );
+      wsRef.current.send(JSON.stringify({ type: "query", message: inputMessage }));
     }
 
     setInputMessage("");
@@ -378,86 +364,93 @@ export default function ChatInterface2({
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          {isConnected ? (
-            <Wifi size={16} className="text-green-500" />
-          ) : (
-            <WifiOff size={16} className="text-red-500" />
-          )}
+          {isConnected ? <Wifi size={16} className="text-green-500" /> : <WifiOff size={16} className="text-red-500" />}
           <span className="text-xs">{connectionStatus}</span>
         </div>
       </div>
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {messages.map((message) => (
-          <div
-            key={message.id}
-            className={`flex ${message.type === "user" ? "justify-end" : "items-start space-x-3"}`}
-          >
-            {message.type === "assistant" && (
-              <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">
-                <Bot size={16} />
-              </div>
-            )}
+        {messages.map((message) => {
+          const labels: UiLabels = {
+            recommended: message.uiLabels?.recommended || "Recommended medicines:",
+            dosage: message.uiLabels?.dosage || "Dosage",
+            availability: message.uiLabels?.availability || "Check availability",
+            emergency: message.uiLabels?.emergency || "Seek emergency medical care immediately",
+          };
 
+          return (
             <div
-              className={`rounded-lg p-3 max-w-sm ${
-                message.type === "user"
-                  ? "bg-medical-blue text-white"
-                  : message.type === "system"
-                  ? "bg-red-50 border border-red-200"
-                  : "bg-medical-light"
-              }`}
+              key={message.id}
+              className={`flex ${message.type === "user" ? "justify-end" : "items-start space-x-3"}`}
             >
-              <p className="text-sm">{message.content}</p>
-
-              {/* Medicines */}
-              {message.medicines && message.medicines.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm font-medium">Recommended medicines:</p>
-                  {message.medicines.map((m, idx) => (
-                    <div key={idx} className="bg-white p-2 rounded border">
-                      <p className="font-medium text-xs">{m.name}</p>
-                      {m.description && <p className="text-xs text-medical-gray">{m.description}</p>}
-                      {m.dosage && (
-                        <p className="text-xs text-medical-gray">Dosage: {m.dosage}</p>
-                      )}
-                      <p className="text-xs text-green-600">{m.localAvailability}</p>
-                    </div>
-                  ))}
+              {message.type === "assistant" && (
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">
+                  <Bot size={16} />
                 </div>
               )}
 
-              {/* Severity */}
-              {message.analysis?.severity && (
-                <div className="mt-2">
-                  <Badge
-                    variant={
-                      message.analysis.severity === "high"
-                        ? "destructive"
-                        : message.analysis.severity === "medium"
-                        ? "default"
-                        : "secondary"
-                    }
-                    className="text-xs"
-                  >
-                    <Shield className="w-3 h-3 mr-1" />
-                    {message.analysis.severity.toUpperCase()}
-                  </Badge>
-                </div>
-              )}
+              <div
+                className={`rounded-lg p-3 max-w-sm ${
+                  message.type === "user"
+                    ? "bg-medical-blue text-white"
+                    : message.type === "system"
+                    ? "bg-red-50 border border-red-200"
+                    : "bg-medical-light"
+                }`}
+              >
+                <p className="text-sm">{message.content}</p>
 
-              {/* Emergency prompt */}
-              {message.analysis?.seekEmergencyCare && (
-                <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded">
-                  <p className="text-xs text-red-800 font-medium">
-                    ⚠️ Seek emergency medical care immediately
-                  </p>
-                </div>
-              )}
+                {/* Medicines */}
+                {message.medicines && message.medicines.length > 0 && (
+                  <div className="mt-3 space-y-2">
+                    <p className="text-sm font-medium">{labels.recommended}</p>
+                    {message.medicines.map((m, idx) => (
+                      <div key={idx} className="bg-white p-2 rounded border">
+                        <p className="font-medium text-xs">{m.name}</p>
+                        {m.description && <p className="text-xs text-medical-gray">{m.description}</p>}
+                        {m.dosage && (
+                          <p className="text-xs text-medical-gray">
+                            {labels.dosage}: {m.dosage}
+                          </p>
+                        )}
+                        <p className="text-xs text-green-600">{m.localAvailability || labels.availability}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Severity */}
+                {message.analysis?.severity && (
+                  <div className="mt-2">
+                    <Badge
+                      variant={
+                        message.analysis.severity === "high"
+                          ? "destructive"
+                          : message.analysis.severity === "medium"
+                          ? "default"
+                          : "secondary"
+                      }
+                      className="text-xs"
+                    >
+                      <Shield className="w-3 h-3 mr-1" />
+                      {message.analysis.severity.toUpperCase()}
+                    </Badge>
+                  </div>
+                )}
+
+                {/* Emergency prompt */}
+                {message.analysis?.seekEmergencyCare && (
+                  <div className="mt-2 p-2 bg-red-100 border border-red-300 rounded">
+                    <p className="text-xs text-red-800 font-medium">
+                      ⚠️ {labels.emergency}
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
 
         {isTyping && (
           <div className="flex items-start space-x-3">
