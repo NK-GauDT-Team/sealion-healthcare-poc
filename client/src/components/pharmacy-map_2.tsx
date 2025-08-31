@@ -292,23 +292,21 @@ export default function PharmacyMap2({
   };
 
   // Open Google Maps (GPS-only):
-  // Option A (recommended): omit origin so Google uses live device GPS.
-  // Option B: include origin=center to mirror backend (uncomment to force same origin).
   const handleNavigation = (p: Pharmacy) => {
     if (!p.latitude || !p.longitude) return;
+
+    // Prefer the same origin used by backend/OSRM
+    const origin = center || gpsRef.current; // `center` is echoed back by backend; gpsRef is your last device fix
     const dest = `${p.latitude},${p.longitude}`;
 
-    // --- Option A: let Google use device GPS (cleanest UX)
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
-
-    // --- Option B: force the same origin as backend (strict consistency)
-    // const origin = center || gpsRef.current;
-    // const url = origin
-    //   ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=driving`
-    //   : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
+    // If we have an origin, force it. Otherwise, let Google infer.
+    const url = origin
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=driving&dir_action=navigate`
+      : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving&dir_action=navigate`;
 
     window.open(url, "_blank");
   };
+
 
   const renderStatusSummary = (p: Pharmacy) => {
     const counts = (p.matches || []).reduce<Record<PharmacyMatch["status"], number>>((acc, m) => {
