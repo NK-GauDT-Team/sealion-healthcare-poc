@@ -38,8 +38,8 @@ export default function Home() {
   // State for User Journey #2 integration
   const [journey2Medicines, setJourney2Medicines] = useState<any[]>([]);
   const [journey2Location, setJourney2Location] = useState({ 
-    city: 'Ho Chi Minh City', 
-    country: 'Vietnam' 
+    city: '', 
+    country: '' 
   });
 
   const handleScrollToSection = (sectionId: string) => {

@@ -1,178 +1,341 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Clock, Navigation } from "lucide-react";
+import {
+  MapPin,
+  Phone,
+  Clock,
+  Navigation,
+  Crosshair,
+  Wifi,
+  WifiOff,
+  Loader2,
+} from "lucide-react";
+
+interface PharmacyMatch {
+  medicineName: string;
+  status: "in_stock" | "likely_in_stock" | "call_to_confirm" | "out_of_stock";
+  score: number;
+  url?: string;
+}
 
 interface Pharmacy {
   id: string;
   name: string;
-  address: string;
-  latitude: string;
-  longitude: string;
-  country: string;
-  city: string;
+  address?: string;
+  latitude?: string;
+  longitude?: string;
+  country?: string;
+  city?: string;
   phoneNumber?: string;
   openingHours?: string;
+  matches?: PharmacyMatch[];
+  bestScore?: number;
+  distance_km?: number;
+  duration_min?: number;
 }
 
-interface MedicineDisplay {
-  name: string;
-  dosage: string;
-  availability: string;
-  description: string;
+interface WSResultPayload {
+  center?: { lat: number; lon: number } | null; // raw GPS echoed back
+  city?: string | null;                          // null in gps-only
+  pharmacies: Pharmacy[];
+  source?: string;
+  fallbackUsed?: boolean;
+  message?: string;
+  radius_km?: number;
 }
 
 interface PharmacyMapProps {
   country?: string;
-  city?: string;
   className?: string;
   medicines?: Array<{
     name: string;
     dosage?: string;
-    description: string;
+    description?: string;
     localAvailability?: string;
   }>;
+  websocketUrl?: string;
 }
 
-// Default location if none provided
-const DEFAULT_LOCATION = 'Ho Chi Minh City';
-
-export default function PharmacyMap({ 
-  country = "Vietnam", 
-  city = DEFAULT_LOCATION, 
+export default function PharmacyMap2({
+  country = "Vietnam",
   className = "",
-  medicines = []
+  medicines = [],
+  websocketUrl = "ws://localhost:8765",
 }: PharmacyMapProps) {
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
+  const [onlyMatches, setOnlyMatches] = useState(true);
   const [selectedPharmacy, setSelectedPharmacy] = useState<string | null>(null);
-  const [displayMedicines, setDisplayMedicines] = useState<MedicineDisplay[]>([]);
-  
-  // Convert medicines from chat format to display format
-  useEffect(() => {
-    if (medicines && medicines.length > 0) {
-      const formattedMedicines = medicines.map(med => ({
-        name: med.name,
-        dosage: med.dosage || 'As directed',
-        availability: med.localAvailability || 'Check availability',
-        description: med.description
-      }));
-      setDisplayMedicines(formattedMedicines);
-    }
-  }, [medicines]);
+  const [meta, setMeta] = useState<{ source?: string; fallbackUsed?: boolean; message?: string }>({});
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("Connecting...");
+  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(null);
 
-  // Fetch pharmacies when location changes
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectRef = useRef<NodeJS.Timeout | null>(null);
+
+  // latest good GPS (we also track accuracy+timestamp for freshness)
+  const gpsRef = useRef<{ lat: number; lon: number } | null>(null);
+  const gpsAccRef = useRef<number | null>(null);
+  const gpsTsRef = useRef<number | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+
+  // Connect WS
   useEffect(() => {
-    const fetchPharmacies = async () => {
-      setLoading(true);
+    const connect = () => {
       try {
-        const response = await fetch(`/api/pharmacies?city=${encodeURIComponent(city)}`);
-        if (response.ok) {
-          const data = await response.json();
-          setPharmacies(data);
-        } else {
-          // Use default pharmacies if API fails
-          setPharmacies(getDefaultPharmacies(city));
-        }
-      } catch (error) {
-        console.error('Error fetching pharmacies:', error);
-        // Use default pharmacies on error
-        setPharmacies(getDefaultPharmacies(city));
-      } finally {
-        setLoading(false);
+        if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.close();
+        wsRef.current = new WebSocket(websocketUrl);
+
+        wsRef.current.onopen = () => {
+          setIsConnected(true);
+          setConnectionStatus("Connected");
+          if (reconnectRef.current) {
+            clearTimeout(reconnectRef.current);
+            reconnectRef.current = null;
+          }
+        };
+
+        wsRef.current.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            const t = String(data?.type || "").toLowerCase();
+            if (t === "connection") {
+              setConnectionStatus(data.status === "ready" ? "GraphRAG Ready" : "Waiting for documents...");
+              return;
+            }
+            if (t === "pharmacy_search_result") {
+              const payload = data as WSResultPayload;
+              setPharmacies(Array.isArray((payload as any).pharmacies) ? (payload as any).pharmacies : []);
+              setMeta({ source: (payload as any).source, fallbackUsed: (payload as any).fallbackUsed, message: (payload as any).message });
+              setCenter(payload.center ?? null); // raw GPS echoed by backend
+              setLoading(false);
+              return;
+            }
+          } catch {
+            setLoading(false);
+          }
+        };
+
+        wsRef.current.onerror = () => {
+          setIsConnected(false);
+          setConnectionStatus("Connection error");
+          setLoading(false);
+        };
+
+        wsRef.current.onclose = () => {
+          setIsConnected(false);
+          setConnectionStatus("Disconnected - Reconnecting...");
+          setLoading(false);
+          if (!reconnectRef.current) {
+            reconnectRef.current = setTimeout(() => {
+              reconnectRef.current = null;
+              connect();
+            }, 2000);
+          }
+        };
+      } catch {
+        setConnectionStatus("Failed to connect");
       }
     };
+    connect();
+    return () => {
+      if (reconnectRef.current) {
+        clearTimeout(reconnectRef.current);
+        reconnectRef.current = null;
+      }
+      if (wsRef.current) wsRef.current.close();
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, [websocketUrl]);
 
-    fetchPharmacies();
-  }, [city]);
+  // GPS-only payload
+  const requestPayload = useMemo(
+    () => ({
+      radius_km: 2,
+      limit: 4,
+      medicines: (medicines || []).map((m) => ({
+        name: m?.name ?? "",
+        dosage: m?.dosage ?? "",
+      })),
+    }),
+    [medicines]
+  );
 
-  // Default pharmacies for major cities
-  const getDefaultPharmacies = (cityName: string): Pharmacy[] => {
-    const defaultData: Record<string, Pharmacy[]> = {
-      'Ho Chi Minh City': [
-        {
-          id: '1',
-          name: 'Pharmacity HCMC',
-          address: '123 Nguyen Hue, District 1',
-          latitude: '10.7769',
-          longitude: '106.7009',
-          country: 'Vietnam',
-          city: 'Ho Chi Minh City',
-          phoneNumber: '+84 28 3822 0000',
-          openingHours: '8:00 AM - 10:00 PM'
-        },
-        {
-          id: '2',
-          name: 'Guardian Vietnam',
-          address: '456 Le Loi, District 1',
-          latitude: '10.7720',
-          longitude: '106.6980',
-          country: 'Vietnam',
-          city: 'Ho Chi Minh City',
-          phoneNumber: '+84 28 3823 1111',
-          openingHours: '9:00 AM - 9:00 PM'
-        },
-        {
-          id: '3',
-          name: 'Long Chau Pharmacy',
-          address: '789 Tran Hung Dao, District 5',
-          latitude: '10.7550',
-          longitude: '106.6750',
-          country: 'Vietnam',
-          city: 'Ho Chi Minh City',
-          phoneNumber: '+84 28 3835 2222',
-          openingHours: '7:30 AM - 10:30 PM'
-        }
-      ],
-      'Manila': [
-        {
-          id: '1',
-          name: 'Mercury Drug Makati',
-          address: 'Ayala Avenue, Makati City',
-          latitude: '14.5565',
-          longitude: '121.0244',
-          country: 'Philippines',
-          city: 'Manila',
-          phoneNumber: '+63 2 8893 0000',
-          openingHours: '24 Hours'
-        },
-        {
-          id: '2',
-          name: 'Watsons BGC',
-          address: 'Bonifacio High Street, Taguig',
-          latitude: '14.5507',
-          longitude: '121.0509',
-          country: 'Philippines',
-          city: 'Manila',
-          phoneNumber: '+63 2 8847 1111',
-          openingHours: '9:00 AM - 10:00 PM'
-        },
-        {
-          id: '3',
-          name: 'Rose Pharmacy',
-          address: 'Ermita, Manila',
-          latitude: '14.5826',
-          longitude: '120.9845',
-          country: 'Philippines',
-          city: 'Manila',
-          phoneNumber: '+63 2 8524 2222',
-          openingHours: '8:00 AM - 9:00 PM'
-        }
-      ]
+  // Auto-search when medicines change AND we have a fresh GPS (≤60s old)
+  useEffect(() => {
+    if (!isConnected) return;
+    if (!(requestPayload.medicines?.length > 0)) return;
+    const fresh = gpsRef.current && gpsTsRef.current && (Date.now() - gpsTsRef.current) <= 60_000;
+    if (!fresh) return;
+    sendSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(requestPayload), isConnected]);
+
+  const sendSearch = (extra?: Partial<typeof requestPayload> & { user_location?: any }) => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    const rid = String(Date.now());
+    setLoading(true);
+    const payload: any = {
+      ...requestPayload,
+      ...(extra || {}),
     };
 
-    return defaultData[cityName] || defaultData['Ho Chi Minh City'];
+    // ensure we include a user_location (prefer fresh explicit)
+    if (extra?.user_location) {
+      payload.user_location = extra.user_location;
+    } else if (gpsRef.current) {
+      payload.user_location = {
+        lat: gpsRef.current.lat,
+        lon: gpsRef.current.lon,
+        accuracy_m: gpsAccRef.current ?? undefined,
+        ts: gpsTsRef.current ?? undefined,
+      };
+    }
+
+    wsRef.current.send(JSON.stringify({ type: "pharmacy_search", rid, payload }));
   };
 
-  const handleNavigation = (pharmacy: Pharmacy) => {
-    const url = `https://www.google.com/maps/dir/?api=1&destination=${pharmacy.latitude},${pharmacy.longitude}`;
-    window.open(url, '_blank');
+  const stopWatch = () => {
+    if (watchIdRef.current !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  };
+
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
+
+    // clear any previous watcher
+    stopWatch();
+
+    const started = Date.now();
+    let best: GeolocationPosition | null = null;
+
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords; // meters
+        if (!best || (accuracy && accuracy < best.coords.accuracy)) best = pos;
+
+        const goodEnough = accuracy !== null && accuracy !== undefined && accuracy <= 80; // tune 30–100
+        const waitedTooLong = Date.now() - started > 15_000; // 15s cap
+
+        if (goodEnough || waitedTooLong) {
+          stopWatch();
+          if (!best) return;
+          gpsRef.current = { lat: best.coords.latitude, lon: best.coords.longitude };
+          gpsAccRef.current = Math.round(best.coords.accuracy || 0);
+          gpsTsRef.current = best.timestamp;
+
+          // Immediate search with fresh GPS & include accuracy for logging
+          sendSearch({
+            user_location: {
+              lat: gpsRef.current.lat,
+              lon: gpsRef.current.lon,
+              accuracy_m: gpsAccRef.current,
+              ts: gpsTsRef.current,
+            },
+          });
+        }
+      },
+      (err) => {
+        stopWatch();
+        alert(`Location error: ${err.message}`);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 25_000,
+        maximumAge: 0, // do not accept cached positions
+      }
+    );
+  };
+
+  const filteredPharmacies = useMemo(() => {
+    if (!onlyMatches) return pharmacies;
+    return pharmacies.filter((p) => (p.matches || []).some((m) => m.status !== "out_of_stock"));
+  }, [pharmacies, onlyMatches]);
+
+  const statusLabel = (status: PharmacyMatch["status"]) => {
+    switch (status) {
+      case "in_stock":
+        return "In stock";
+      case "likely_in_stock":
+        return "Likely in stock";
+      case "call_to_confirm":
+        return "Call to confirm";
+      case "out_of_stock":
+      default:
+        return "Out of stock";
+    }
+  };
+
+  const statusBadge = (status: PharmacyMatch["status"], count?: number) => {
+    const text = statusLabel(status) + (count && count > 1 ? ` (${count})` : "");
+    switch (status) {
+      case "in_stock":
+        return <Badge className="text-xs bg-green-100 text-green-800">{text}</Badge>;
+      case "likely_in_stock":
+        return <Badge className="text-xs bg-emerald-100 text-emerald-800">{text}</Badge>;
+      case "call_to_confirm":
+        return <Badge className="text-xs bg-amber-100 text-amber-800">{text}</Badge>;
+      case "out_of_stock":
+      default:
+        return <Badge className="text-xs bg-red-100 text-red-800">{text}</Badge>;
+    }
+  };
+
+  // Open Google Maps (GPS-only):
+  // Option A (recommended): omit origin so Google uses live device GPS.
+  // Option B: include origin=center to mirror backend (uncomment to force same origin).
+  const handleNavigation = (p: Pharmacy) => {
+    if (!p.latitude || !p.longitude) return;
+    const dest = `${p.latitude},${p.longitude}`;
+
+    // --- Option A: let Google use device GPS (cleanest UX)
+    const url = `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
+
+    // --- Option B: force the same origin as backend (strict consistency)
+    // const origin = center || gpsRef.current;
+    // const url = origin
+    //   ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=driving`
+    //   : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving`;
+
+    window.open(url, "_blank");
+  };
+
+  const renderStatusSummary = (p: Pharmacy) => {
+    const counts = (p.matches || []).reduce<Record<PharmacyMatch["status"], number>>((acc, m) => {
+      acc[m.status] = (acc[m.status] || 0) + 1;
+      return acc;
+    }, {} as any);
+    const entries = Object.entries(counts) as Array<[PharmacyMatch["status"], number]>;
+    if (entries.length === 0) return null;
+    if (entries.length === 1) return statusBadge(entries[0][0]);
+    return (
+      <div className="flex flex-wrap gap-2">
+        {entries.map(([status, cnt]) => (
+          <span key={status}>{statusBadge(status, cnt)}</span>
+        ))}
+      </div>
+    );
   };
 
   return (
     <div className={`space-y-4 ${className}`}>
-      {/* Recommended Medicines Panel */}
+      {/* Connection status */}
+      <div className="flex items-center justify-end text-xs text-medical-gray">
+        {isConnected ? <Wifi size={14} className="text-green-500 mr-1" /> : <WifiOff size={14} className="text-red-500 mr-1" />}
+        <span>{connectionStatus}</span>
+      </div>
+
+      {/* Recommended Medicines */}
       <Card className="shadow-lg">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
@@ -180,27 +343,23 @@ export default function PharmacyMap({
               <MapPin className="mr-2" size={20} />
               Recommended Medicines
             </CardTitle>
-            <Badge variant="outline" className="text-xs">
-              {city}
-            </Badge>
           </div>
         </CardHeader>
         <CardContent>
-          {displayMedicines.length > 0 ? (
+          {medicines?.length ? (
             <div className="space-y-3">
-              {displayMedicines.map((medicine, idx) => (
-                <div key={idx} className="bg-medical-light p-3 rounded-lg">
-                  <div className="flex justify-between items-start mb-1">
-                    <h4 className="font-semibold text-sm">{medicine.name}</h4>
-                    <Badge 
-                      variant="default"
-                      className="text-xs bg-green-100 text-green-800"
-                    >
-                      {medicine.availability}
-                    </Badge>
+              {medicines.map((m, i) => (
+                <div key={i} className="bg-medical-light p-3 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="pr-3">
+                      <h4 className="font-semibold text-sm">{m.name}</h4>
+                      {m.description && <p className="text-xs text-medical-gray mt-1">{m.description}</p>}
+                      {m.dosage && <p className="text-xs text-medical-blue mt-1">{m.dosage}</p>}
+                    </div>
+                    {m.localAvailability && (
+                      <Badge className="text-xs bg-green-100 text-green-800 self-start">{m.localAvailability}</Badge>
+                    )}
                   </div>
-                  <p className="text-xs text-medical-gray mb-1">{medicine.description}</p>
-                  <p className="text-xs font-medium text-medical-blue">{medicine.dosage}</p>
                 </div>
               ))}
             </div>
@@ -221,69 +380,118 @@ export default function PharmacyMap({
             Nearby Pharmacies
           </CardTitle>
         </CardHeader>
+
         <CardContent>
+          {/* GPS-only controls */}
+          <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
+            <div className="flex-1 flex items-center gap-2">
+              <Button variant="outline" onClick={handleUseMyLocation} disabled={!isConnected || loading}>
+                <Crosshair size={16} className="mr-1" />
+                Use my location
+              </Button>
+            </div>
+
+            <label className="flex items-center gap-2 text-sm text-medical-gray">
+              <input type="checkbox" checked={onlyMatches} onChange={(e) => setOnlyMatches(e.target.checked)} />
+              Only show pharmacies with my medicines
+            </label>
+          </div>
+
+          {(meta.source || meta.fallbackUsed || meta.message) && (
+            <div className="text-xs text-gray-500 mb-2">
+              {meta.source ? <>Source: {meta.source}. </> : null}
+              {meta.fallbackUsed ? <>Fallback used. </> : null}
+              {meta.message ? <>{meta.message}</> : null}
+            </div>
+          )}
+
           {loading ? (
             <div className="text-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-medical-blue mx-auto"></div>
-              <p className="text-sm text-medical-gray mt-4">Loading pharmacies...</p>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" />
+              <p className="text-sm text-medical-gray mt-4">Finding pharmacies and checking availability…</p>
             </div>
-          ) : (
+          ) : filteredPharmacies.length ? (
             <div className="space-y-3">
-              {pharmacies.map((pharmacy) => (
+              {filteredPharmacies.map((p) => (
                 <div
-                  key={pharmacy.id}
-                  className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                    selectedPharmacy === pharmacy.id 
-                      ? 'border-medical-blue bg-medical-light' 
-                      : 'border-gray-200 hover:border-medical-blue/50'
+                  key={p.id}
+                  className={`border rounded-lg p-3 transition-all cursor-pointer ${
+                    selectedPharmacy === p.id ? "border-medical-blue bg-medical-light" : "border-gray-200 hover:border-medical-blue/50"
                   }`}
-                  onClick={() => setSelectedPharmacy(pharmacy.id)}
+                  onClick={() => setSelectedPharmacy(p.id)}
                 >
                   <div className="flex justify-between items-start mb-2">
-                    <h4 className="font-semibold text-sm">{pharmacy.name}</h4>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="h-6 px-2"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleNavigation(pharmacy);
-                      }}
-                    >
-                      <Navigation size={14} className="mr-1" />
-                      <span className="text-xs">Navigate</span>
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-1 text-xs text-medical-gray">
-                    <div className="flex items-center">
-                      <MapPin size={12} className="mr-2 flex-shrink-0" />
-                      {pharmacy.address}
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-sm">{p.name}</h4>
+                      {typeof p.distance_km === "number" ? (
+                        <Badge variant="outline" className="text-xs">
+                          {p.distance_km} km{typeof p.duration_min === "number" ? ` • ${p.duration_min} min` : ""}
+                        </Badge>
+                      ) : null}
                     </div>
-                    
-                    {pharmacy.phoneNumber && (
+                    {p.latitude && p.longitude ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNavigation(p);
+                        }}
+                      >
+                        <Navigation size={14} className="mr-1" />
+                        <span className="text-xs">Navigate</span>
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1 text-xs text-medical-gray">
+                    {p.address && (
+                      <div className="flex items-center">
+                        <MapPin size={12} className="mr-2 flex-shrink-0" />
+                        {p.address}
+                      </div>
+                    )}
+                    {p.phoneNumber && (
                       <div className="flex items-center">
                         <Phone size={12} className="mr-2 flex-shrink-0" />
-                        {pharmacy.phoneNumber}
+                        {p.phoneNumber}
                       </div>
                     )}
-                    
-                    {pharmacy.openingHours && (
+                    {p.openingHours && (
                       <div className="flex items-center">
                         <Clock size={12} className="mr-2 flex-shrink-0" />
-                        {pharmacy.openingHours}
+                        {p.openingHours}
                       </div>
                     )}
                   </div>
+
+                  {!!(p.matches && p.matches.length) && (
+                    <>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {p.matches!.map((m, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs bg-gray-900 text-white">
+                            {m.medicineName}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="mt-2">{renderStatusSummary(p)}</div>
+                    </>
+                  )}
                 </div>
               ))}
             </div>
+          ) : (
+            <div className="text-center py-8 text-medical-gray">
+              <p className="text-sm">No pharmacies found for this location/filters.</p>
+              <p className="text-xs mt-2">Tap “Use my location” to search from your GPS.</p>
+            </div>
           )}
-          
-          {/* Interactive Map Placeholder */}
+
+          {/* Map placeholder */}
           <div className="mt-4 bg-gray-100 rounded-lg h-48 flex items-center justify-center">
             <div className="text-center">
-              <MapPin className="mx-auto text-medical-blue mb-2" size={32} />
+              <MapPin className="mx-auto mb-2" size={32} />
               <p className="text-sm text-medical-gray">Interactive map view</p>
               <p className="text-xs text-gray-500 mt-1">Click a pharmacy to see on map</p>
             </div>
