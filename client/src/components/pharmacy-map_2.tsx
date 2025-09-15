@@ -61,7 +61,7 @@ export default function PharmacyMap2({
   country = "Vietnam",
   className = "",
   medicines = [],
-  websocketUrl = "ws://3.95.212.252:8765",
+  websocketUrl = "wss://3.95.212.252:8765",
 }: PharmacyMapProps) {
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [loading, setLoading] = useState(false);
