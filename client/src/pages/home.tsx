@@ -73,7 +73,7 @@ export default function Home() {
                     SEALION-LLM
                     <img 
                       src={SEALIONPHOTO} 
-                      alt="SEALION LLM" 
+                      alt="SEALION LLM"
                       style={{ height: "45px", marginLeft: "8px", display: "inline-block", verticalAlign: "middle" }} 
                     />
                   </a>

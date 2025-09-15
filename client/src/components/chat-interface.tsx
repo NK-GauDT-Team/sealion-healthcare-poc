@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Bot, Shield, Clock } from "lucide-react";
+import { Loader2, Send, Bot, Shield, Clock, AlertTriangle } from "lucide-react";
 
 interface ChatMessage {
   id: string;
@@ -11,110 +11,30 @@ interface ChatMessage {
   content: string;
   timestamp: Date;
   medicines?: any[];
+  nonPharmacologic?: any[];
   analysis?: any;
+  error?: boolean;
 }
 
 interface ChatInterfaceProps {
   initialMessages?: ChatMessage[];
 }
 
-// ######################################### THE HARDCODED SCRIPT STARTED HERE ###################################################################
-const SCRIPTED_CONVERSATION = [
-  {
-    // First script of discussion between User and System
-    userMessage: "My name is Alex, I'm from United Kingdom now visiting in Jakarta. I'd feel so bloated in my stomach, please recommend me a medicine.",
-    systemResponse: "🔎 Searched and found info from 10 trusted websites! 🌐\
-                          I understand you're experiencing a bloated in your stomach. \
-                          These symptoms can have various causes. \
-                          Can you tell me more about when this started and if you have any other symptoms?",
-    medicines: [
-      {
-        name: "Tolak Angin",
-        description: "For colds with symptoms of bloating, nausea, stomach ache, dizziness, chills, and a dry throat.\
-                       Good for long journeys, fatigue, and sleep deprivation. To maintain/protect the immune system.",
-        dosage: "Drink one sachet every 3 hours."
-      },
-      {
-        name: "Antangin JRG Tablet",
-        description: "The ginger content in this product can treat colds and increase the body's resistance.",
-        dosage: "Take 1-2 tablets every 6-8 hours with food"
-      }
-    ],
-    analysis: {
-      severity: "low",
-      analysis: "Your symptoms suggest common tension headache or mild fatigue. Rest and hydration are important.",
-      seekEmergencyCare: false
-    }
-  },
-  {
-    // Second script of discussion between User and System
-    userMessage: "The bloating pain is getting worse, and I feel like I might vomit",
-    systemResponse: "🔎 Searched and found info from 3 trusted websites! 🌐 \
-                        Experiencing bloating along with nausea or vomiting can be uncomfortable. \
-                        Try to soothe your stomach with some herbal tea and rest.",
-    medicines: [
-      {
-        name: "FreshCare Roll On",
-        description: "FreshCare is an aromatherapy oil that is effective in relieving symptoms of dizziness, \
-                        headaches, bloating, flu, or aches and pains that can occur when you catch a cold.",
-        usage: "Apply to your abdomen or under your nose."
-      },
-      {
-        name: "Wedang Jahe",
-        description: "This beverage is valued for its warming effects and a range of health benefits, \
-                        such as helping to relieve nausea and discomfort from bloating.",
-        dosage: "Mix 1 packet with 200ml water, drink slowly"
-      }
-    ],
-    analysis: {
-      severity: "medium",
-      analysis: "Fever with headache may indicate viral infection. Monitor temperature and seek care if symptoms worsen.",
-      seekEmergencyCare: false
-    }
-  },
-  {
-    // Third script of discussion between User and System
-    userMessage: "Is this something serious? I'm now experiencing a fever along with intense abdominal pain.",
-    systemResponse: "🔎 Searched and found info from 5 trusted websites! 🌐 \
-                        If your fever is rising above 39°C (102.2°F) or if you develop severe symptoms like difficulty breathing, \
-                        persistent vomiting, or severe abdominal pain, you should seek immediate medical attention. \
-                        For now, continue with fever management and rest.",
-    medicines: [
-      {
-        name: "Paracetamol 500mg",
-        description: "Continue for fever control",
-        dosage: "Every 4-6 hours, alternate with ibuprofen if needed"
-      },
-      {
-        name: "Panadol",
-        description: "This medication provides relief from fever and the accompanying headache.",
-        dosage: "Drink 1 tablet per day."
-      }
-    ],
-    analysis: {
-      severity: "medium",
-      analysis: "Rising fever requires monitoring. Seek medical care if temperature exceeds 39°C or if symptoms worsen significantly.",
-      seekEmergencyCare: false
-    }
-  }
-];
-// ######################################### THE SCRIPT ENDED HERE ###################################################################
-
 export default function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       type: 'assistant',
-      content: "Hello! I'm your medical assistant. I can help you understand your symptoms and find local medicines. How are you feeling today?",
+      content: "Hello! I'm your medical assistant. I can help you understand your symptoms and find local medicines. Please describe your symptoms and location so I can provide appropriate recommendations.",
       timestamp: new Date()
     },
     ...initialMessages
   ]);
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [conversationStep, setConversationStep] = useState(0);
-  const [awaitingInput, setAwaitingInput] = useState(false);
   const [typingStep, setTypingStep] = useState(0);
+  const [expandedMedicines, setExpandedMedicines] = useState<{[key: string]: boolean}>({});
+  const [expandedMethods, setExpandedMethods] = useState<{[key: string]: boolean}>({});
 
   // Handle typing step rotation
   useEffect(() => {
@@ -128,51 +48,29 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     }
   }, [isTyping]);
 
-  // Handle any key press to trigger scripted responses
-  useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (conversationStep < SCRIPTED_CONVERSATION.length && !isTyping && !awaitingInput) {
-        triggerScriptedConversation();
+  const callMedicalAPI = async (query: string) => {
+    try {
+      const response = await fetch('http://ec2-54-234-165-21.compute-1.amazonaws.com:5000/test_process/', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          query: query
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
       }
-    };
-
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [conversationStep, isTyping, awaitingInput]);
-
-  const triggerScriptedConversation = () => {
-    if (conversationStep >= SCRIPTED_CONVERSATION.length) return;
-
-    const currentScript = SCRIPTED_CONVERSATION[conversationStep];
-    setAwaitingInput(true);
-
-    // Add user message
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      type: 'user',
-      content: currentScript.userMessage,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setIsTyping(true);
-
-    // Simulate typing delay and add system response
-    setTimeout(() => {
-      const systemMessage: ChatMessage = {
-        id: `system-${Date.now()}`,
-        type: 'assistant',
-        content: currentScript.systemResponse,
-        timestamp: new Date(),
-        medicines: currentScript.medicines,
-        analysis: currentScript.analysis
-      };
-
-      setMessages(prev => [...prev, systemMessage]);
-      setIsTyping(false);
-      setConversationStep(prev => prev + 1);
-      setAwaitingInput(false);
-    }, 3000); // 3 second delay to show all typing steps
+      
+      const data = await response.json();
+      console.log('API Response:', data);
+      return data.result;
+    } catch (error) {
+      console.error('API call failed:', error);
+      throw error;
+    }
   };
 
   const handleSendMessage = async () => {
@@ -186,21 +84,57 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentQuery = inputMessage;
     setInputMessage("");
     setIsTyping(true);
 
-    // Simulate a generic response for manual inputs
-    setTimeout(() => {
+    try {
+      const apiResponse = await callMedicalAPI(currentQuery);
+      
+      // Create response message based on API data
+      let responseContent = "🔎 I've analyzed your symptoms and found some recommendations based on traditional medicine practices.\n\n";
+      
+      // Add analysis if available
+      if (apiResponse.analysis) {
+        responseContent += `📋 **Analysis:** ${apiResponse.analysis}\n\n`;
+      }
+      
+      // Add severity information
+      if (apiResponse.severity) {
+        const severityEmoji = apiResponse.severity === 'high' ? '🔴' : 
+                             apiResponse.severity === 'medium' ? '🟡' : '🟢';
+        responseContent += `${severityEmoji} **Severity Level:** ${apiResponse.severity.toUpperCase()}\n\n`;
+      }
+
       const assistantMessage: ChatMessage = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: "Thank you for sharing that information. I'm analyzing your symptoms. For the scripted demonstration, please press any key to continue with the predefined conversation flow.",
-        timestamp: new Date()
+        content: responseContent,
+        timestamp: new Date(),
+        medicines: apiResponse.medicine_details || [],
+        nonPharmacologic: apiResponse.non_pharmacologic_methods || [],
+        analysis: {
+          severity: apiResponse.severity || 'low',
+          analysis: apiResponse.analysis || '',
+          seekEmergencyCare: apiResponse.severity === 'high'
+        }
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      // Handle API error
+      const errorMessage: ChatMessage = {
+        id: Date.now().toString(),
+        type: 'assistant',
+        content: "I'm sorry, I'm having trouble connecting to the medical database right now. Please try again in a moment, or consult with a healthcare professional if your symptoms are severe.",
+        timestamp: new Date(),
+        error: true
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
       setIsTyping(false);
-    }, 3000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -210,22 +144,49 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     }
   };
 
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return '🔴';
+      case 'medium':
+        return '🟡';
+      case 'low':
+        return '🟢';
+      default:
+        return '⚪';
+    }
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg h-[600px] max-w-4xl w-full flex flex-col">
+    <div className="bg-white border border-gray-200 rounded-xl shadow-lg h-[700px] max-w-5xl w-full flex flex-col">
       {/* Chat Header */}
-      <div className="bg-medical-blue text-white p-4 rounded-t-xl flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-xl flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-            <Bot size={16} />
+          <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+            <Bot size={20} />
           </div>
           <div>
-            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (SEALION MCP TO PROVIDE LOCAL AND TRADITIONAL MEDICINE)</h3>
-            <p className="text-xs opacity-75" data-testid="text-location">Online • Jakarta, Indonesia</p>
+            <h3 className="font-semibold text-lg" data-testid="text-assistant-title">Medical Assistant</h3>
+            <p className="text-sm opacity-90" data-testid="text-subtitle">SEALION MCP - Local & Traditional Medicine</p>
+            <p className="text-xs opacity-75" data-testid="text-location">Online • Global Coverage</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-medical-success rounded-full"></div>
-          <span className="text-xs" data-testid="text-secure-connection">Secure Connection</span>
+          <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+          <span className="text-sm" data-testid="text-secure-connection">Secure Connection</span>
         </div>
       </div>
 
@@ -234,44 +195,139 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'items-start space-x-3'}`}>
             {message.type === 'assistant' && (
-              <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">
-                <Bot size={16} />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 ${message.error ? 'bg-red-500' : 'bg-blue-600'}`}>
+                {message.error ? <AlertTriangle size={16} /> : <Bot size={16} />}
               </div>
             )}
             
-            <div className={`rounded-lg p-3 max-w-sm ${
+            <div className={`rounded-lg p-4 max-w-2xl ${
               message.type === 'user' 
-                ? 'bg-medical-blue text-white' 
-                : 'bg-medical-light'
+                ? 'bg-blue-600 text-white ml-auto' 
+                : message.error 
+                ? 'bg-red-50 border border-red-200'
+                : 'bg-gray-50 border border-gray-200'
             }`}>
-              <p className="text-sm" data-testid={`message-${message.type}-${message.id}`}>
+              <p className="text-sm whitespace-pre-line leading-relaxed" data-testid={`message-${message.type}-${message.id}`}>
                 {message.content}
               </p>
               
               {/* Medicine recommendations */}
               {message.medicines && message.medicines.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm font-medium">Recommended medicines:</p>
-                  {message.medicines.map((medicine, idx) => (
-                    <div key={idx} className="bg-white p-2 rounded border" data-testid={`medicine-recommendation-${idx}`}>
-                      <p className="font-medium text-xs">{medicine.name}</p>
-                      <p className="text-xs text-medical-gray">{medicine.description}</p>
-                      <p className="text-xs text-medical-gray">Dosage: {medicine.dosage}</p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">🌿</span>
+                      <p className="text-sm font-semibold text-green-700">Traditional Medicines:</p>
                     </div>
-                  ))}
+                    {message.medicines.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedMedicines(prev => ({
+                          ...prev,
+                          [message.id]: !prev[message.id]
+                        }))}
+                        className="text-xs text-green-600 hover:text-green-700 p-2 h-auto"
+                      >
+                        {expandedMedicines[message.id] ? 'Show Less' : `Show All (${message.medicines.length})`}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3">
+                    {(expandedMedicines[message.id] ? message.medicines : message.medicines.slice(0, 2)).map((medicine, idx) => (
+                      <div key={idx} className="bg-white p-3 rounded-lg border border-green-100 shadow-sm" data-testid={`medicine-recommendation-${idx}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm text-green-800 capitalize">{medicine.medicine_name}</p>
+                            <p className="text-xs text-gray-700 mt-1 leading-relaxed">{medicine.medicine_instruction}</p>
+                            {medicine.dosage && (
+                              <div className="mt-2">
+                                <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                  Dosage: {medicine.dosage}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Severity indicator */}
+              {/* Non-pharmacologic methods */}
+              {message.nonPharmacologic && message.nonPharmacologic.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">🏠</span>
+                      <p className="text-sm font-semibold text-blue-700">Home Care Methods:</p>
+                    </div>
+                    {message.nonPharmacologic.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedMethods(prev => ({
+                          ...prev,
+                          [message.id]: !prev[message.id]
+                        }))}
+                        className="text-xs text-blue-600 hover:text-blue-700 p-2 h-auto"
+                      >
+                        {expandedMethods[message.id] ? 'Show Less' : `Show All (${message.nonPharmacologic.length})`}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3">
+                    {(expandedMethods[message.id] ? message.nonPharmacologic : message.nonPharmacologic.slice(0, 2)).map((method, idx) => (
+                      <div key={idx} className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm" data-testid={`method-recommendation-${idx}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm text-blue-800 capitalize">{method.method_name}</p>
+                            <p className="text-xs text-gray-700 mt-1 leading-relaxed">{method.instructions}</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {method.frequency && (
+                                <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  Frequency: {method.frequency}
+                                </Badge>
+                              )}
+                              {method.duration && (
+                                <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  Duration: {method.duration}
+                                </Badge>
+                              )}
+                            </div>
+                            {method.notes && (
+                              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 flex items-start space-x-1">
+                                <span>⚠️</span>
+                                <span>{method.notes}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Severity indicator and emergency warning */}
               {message.analysis?.severity && (
-                <div className="mt-2">
-                  <Badge 
-                    variant={message.analysis.severity === 'high' ? 'destructive' : 
-                            message.analysis.severity === 'medium' ? 'default' : 'secondary'}
-                    data-testid={`severity-${message.analysis.severity}`}
-                  >
-                    {message.analysis.severity} priority
-                  </Badge>
+                <div className="mt-4 space-y-2">
+                  <div className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border shadow-sm ${getSeverityColor(message.analysis.severity)}`} data-testid={`severity-${message.analysis.severity}`}>
+                    <span className="mr-2">{getSeverityIcon(message.analysis.severity)}</span>
+                    {message.analysis.severity.toUpperCase()} PRIORITY
+                  </div>
+                  {message.analysis.seekEmergencyCare && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-300 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-red-800">Immediate Medical Attention Recommended</p>
+                          <p className="text-xs text-red-700 mt-1">Please consider consulting with a healthcare professional or visiting the nearest medical facility.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -281,18 +337,18 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
         {/* Typing indicator */}
         {isTyping && (
           <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
               <Bot size={16} />
             </div>
-            <div className="bg-medical-light rounded-lg p-3 max-w-sm">
-              <div className="flex items-center space-x-2 text-xs text-medical-gray">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                <span data-testid="typing-indicator">
+            <div className="bg-gray-50 rounded-lg p-4 max-w-sm border border-gray-200">
+              <div className="flex items-center space-x-3 text-sm text-gray-600">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <span data-testid="typing-indicator" className="animate-pulse">
                   {(() => {
                     const steps = [
-                      "Translating the meaning",
-                      "Searching the local / traditional medicine nearby your area",
-                      "Found medicines..."
+                      "Analyzing your symptoms...",
+                      "Searching for traditional medicines...",
+                      "Preparing recommendations..."
                     ];
                     return steps[typingStep];
                   })()}
@@ -301,42 +357,27 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             </div>
           </div>
         )}
-
-        {/* Instruction for scripted demo */}
-        {conversationStep < SCRIPTED_CONVERSATION.length && !isTyping && !awaitingInput && (
-          <div className="text-center py-2">
-            <p className="text-xs text-medical-gray bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-              Press any key to continue the scripted conversation ({conversationStep + 1}/{SCRIPTED_CONVERSATION.length})
-            </p>
-          </div>
-        )}
-
-        {conversationStep >= SCRIPTED_CONVERSATION.length && !isTyping && (
-          <div className="text-center py-2">
-            <p className="text-xs text-medical-gray bg-green-50 p-2 rounded-lg border border-green-200">
-              Scripted conversation completed! You can now type your own messages.
-            </p>
-          </div>
-        )}
       </div>
 
       {/* Chat Input */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center space-x-3">
-          <Input
-            type="text"
-            placeholder={conversationStep < SCRIPTED_CONVERSATION.length ? "Press any key for scripted demo..." : "Describe your symptoms..."}
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="flex-1"
-            disabled={isTyping}
-            data-testid="input-chat-message"
-          />
+      <div className="border-t border-gray-200 p-4 bg-gray-50">
+        <div className="flex items-end space-x-3">
+          <div className="flex-1">
+            <Input
+              type="text"
+              placeholder="Describe your symptoms and location (e.g., 'I'm Kevin from Jakarta, currently in Vietnam, and I have a cough with phlegm...')"
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              disabled={isTyping}
+              data-testid="input-chat-message"
+            />
+          </div>
           <Button
             onClick={handleSendMessage}
             disabled={!inputMessage.trim() || isTyping}
-            className="bg-medical-blue hover:bg-medical-blue-dark"
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2"
             data-testid="button-send-message"
           >
             {isTyping ? (
@@ -346,18 +387,18 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             )}
           </Button>
         </div>
-        <div className="flex items-center justify-between mt-2 text-xs text-medical-gray">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-1">
-              <Shield size={12} />
+        <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <Shield size={12} className="text-green-600" />
               <span data-testid="text-disclaimer-privacy">Private & Secure</span>
             </div>
-            <div className="flex items-center space-x-1">
-              <Clock size={12} />
+            <div className="flex items-center space-x-2">
+              <Clock size={12} className="text-blue-600" />
               <span data-testid="text-disclaimer-availability">24/7 Available</span>
             </div>
           </div>
-          <p className="text-xs" data-testid="text-medical-disclaimer">
+          <p className="text-xs text-gray-600 max-w-md text-right" data-testid="text-medical-disclaimer">
             For informational purposes only. Consult a healthcare professional for serious conditions.
           </p>
         </div>
