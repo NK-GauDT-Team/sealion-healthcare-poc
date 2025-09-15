@@ -14,8 +14,9 @@ import PharmacyMap2 from "@/components/pharmacy-map_2";
 import PharmacyMap3 from "@/components/pharmacy-map_3";
 
 import myPhoto from "@assets/ai_medical_assisstant_pp.png";
+import SEALIONPHOTO from "@assets/sealion-llm.png";
+
 import { Link } from "wouter";
-import { useState } from "react";
 import { 
   MessageCircle, 
   Play, 
@@ -30,8 +31,11 @@ import {
   Lock,
   UserCheck,
   AlertTriangle,
-  Stethoscope
+  Stethoscope,
+  Briefcase,
+  Plane,
 } from "lucide-react";
+import { useState } from "react";
 
 
 export default function Home() {
@@ -49,13 +53,12 @@ export default function Home() {
     }
   };
   
-  // [Keep all the existing code before the Demo section unchanged]
 
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
       
-      {/* Hero Section - UNCHANGED */}
+      {/* Hero Section */}
       <section className="bg-gradient-to-br from-medical-light to-white py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
@@ -65,219 +68,383 @@ export default function Home() {
                 <span className="text-medical-blue"> Anywhere in the World</span>
               </h1>
               <p className="text-xl text-medical-gray mb-8 leading-relaxed" data-testid="text-hero-description">
-                AI-powered medical assistance for travelers. Get instant symptom analysis, 
-                local medicine recommendations, and nearby pharmacy locations wherever you are.
+                AI-driven healthcare support for travelers who speaks in South Asian languages. Receive immediate health guidance, 
+                medicine recommendations, and local pharmacy locations wherever you are.{" "}
+                <br></br>
+                <br></br>
+                <span className="text-sm text-medical-gray font-bold flex items-center" style={{ fontSize: "20px" }}>
+                  Powered by{" "}
+                  <a 
+                    href="https://docs.sea-lion.ai/" 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="text-medical-blue hover:text-medical-blue-dark underline font-medium flex items-center ml-1"
+                  >
+                    SEALION-LLM
+                    <img 
+                      src={SEALIONPHOTO} 
+                      alt="SEALION LLM" 
+                      style={{ height: "45px", marginLeft: "8px", display: "inline-block", verticalAlign: "middle" }} 
+                    />
+                  </a>
+                </span>
               </p>
-              
               <div className="flex flex-col sm:flex-row gap-4">
+                <a href="#demo">
+                  <Button 
+                    className="bg-medical-blue hover:bg-medical-blue-dark text-white px-8 py-4 text-base font-semibold"
+                    data-testid="button-start-chat"
+                  >
+                    <MessageCircle className="mr-3" size={20} />
+                    Start Medical Chat
+                  </Button>
+                </a>
                 <Button 
-                  size="lg" 
-                  className="bg-medical-blue hover:bg-medical-blue/90"
+                  variant="outline" 
+                  className="border-medical-blue text-medical-blue hover:bg-medical-blue hover:text-white px-8 py-4 text-base font-semibold"
                   onClick={() => handleScrollToSection('demo')}
-                  data-testid="button-try-demo"
+                  data-testid="#demo"
                 >
-                  <Play className="mr-2" /> Try Demo
-                </Button>
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  onClick={() => handleScrollToSection('how-it-works')}
-                  data-testid="button-how-it-works"
-                >
-                  <MessageCircle className="mr-2" /> How It Works
+                  <Play className="mr-3" size={20} />
+                  Watch Demo
                 </Button>
               </div>
+              <div className="mt-8 flex items-center space-x-6 text-sm text-medical-gray flex-wrap gap-4">
+                <div className="flex items-center" data-testid="feature-hipaa">
+                  <Shield className="text-medical-success mr-2" size={16} />
+                  HIPAA Compliant
+                </div>
+                <div className="flex items-center" data-testid="feature-24-7">
+                  <Clock className="text-medical-success mr-2" size={16} />
+                  24/7 Available
+                </div>
+                <div className="flex items-center" data-testid="feature-countries">
+                  <Globe className="text-medical-success mr-2" size={16} />
+                  190+ Countries
+                </div>
+              </div>
+            </div>
+            <div className="relative">
+              <img 
+                src={myPhoto}
+                alt="Medical consultation online" 
+                className="rounded-2xl shadow-2xl w-full"
+                data-testid="img-hero-consultation"
+              />
+              <Card className="absolute -bottom-6 -left-6 max-w-xs">
+                <CardContent className="p-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-3 h-3 bg-medical-success rounded-full animate-pulse"></div>
+                    <span className="text-sm font-medium" data-testid="text-ai-active">AI Assistant Active</span>
+                  </div>
+                  <p className="text-xs text-medical-gray mt-1" data-testid="text-location-status">
+                    Analyzing symptoms in any Southeast Asian countries.
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Key Features */}
+      <section id="features" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-features-title">
+              Everything You Need for Healthy Travel
+            </h2>
+            <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-features-description">
+              Advanced AI technology combined with local medical knowledge to keep you safe and healthy abroad.
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-ai">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Bot className="text-white text-xl" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Symptom Analysis</h3>
+                <p className="text-medical-gray">
+                  SEALION LLM processes symptoms with medical precision, leveraging Southeast Asian healthcare patterns 
+                  for accurate preliminary assessments.
+                </p>
+              </CardContent>
+            </Card>
+            
+            
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-language">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Languages className="text-white text-xl" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Multilingual Support</h3>
+                <p className="text-medical-gray">
+                  SEALION excels at Southeast Asian languages and cultural nuances, understanding local medical terms and traditional remedy contexts, 
+                  and allowing you to communicate in your preferred language with automatic translation capabilities.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-medicine">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Pill className="text-white text-xl" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Medicine Finder</h3>
+                <p className="text-medical-gray">
+                  Find local prescription and alternative medicine options, with clear, safe dosage and usage guidance.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-location">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <MapPin className="text-white text-xl" />
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Location-aware Care</h3>
+                <p className="text-medical-gray">
+                  Automatically finds medicines and healthcare options available in your current location.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Innovation Stack */}
+      <section id="innovation-stack" className="py-20 bg-medical-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-how-it-works-title">
+              Our Innovation Stack
+            </h2>
+            <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-how-it-works-description">
+              We are not a generic chatbot. We’re built from the ground up with cutting-edge AI architecture designed specifically for healthcare travelers.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            <div className="space-y-8">
+              <div className="flex items-start space-x-4" data-testid="GraphRAG">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">1</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">GraphRAG (Graph-based Retrieval-Augmented Generation)</h3>
+                  <p className="text-medical-gray">
+                    We don’t just search; we connect information like a medical knowledge graph. This means smarter, context-aware answers that link your symptoms, prescriptions, and local drug equivalents.
+                  </p>
+                </div>
+              </div>
               
-              <div className="flex items-center gap-6 mt-8 text-sm text-medical-gray">
-                <div className="flex items-center">
-                  <Shield className="mr-2 text-medical-success" size={16} />
-                  <span>Medical Grade AI</span>
+              <div className="flex items-start space-x-4" data-testid="MCP">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">2</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">MCP(Model Context Protocol)</h3>
+                  <p className="text-medical-gray">
+                    Our bot plugs into real-time local data through MCP integrations — from pharmacy databases to hospital APIs — giving you live, trusted recommendations beyond static AI text.
+                  </p>
                 </div>
-                <div className="flex items-center">
-                  <Clock className="mr-2 text-medical-success" size={16} />
-                  <span>24/7 Available</span>
+              </div>
+              
+              <div className="flex items-start space-x-4" data-testid="searchengine">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">3</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Integrated Search Engine</h3>
+                  <p className="text-medical-gray">
+                    Instead of hallucinating, our engine cross-checks multiple verified health and pharmacy sources before suggesting guidance, ensuring higher reliability and safety.
+                  </p>
                 </div>
-                <div className="flex items-center">
-<Globe className="mr-2 text-medical-success" size={16} />
-                 <span>Global Coverage</span>
-               </div>
-             </div>
-           </div>
-           
-           <div className="relative">
-             <div className="relative z-10">
-               <img
-                 src={myPhoto}
-                 alt="AI Medical Assistant"
-                 className="rounded-2xl shadow-2xl w-full"
-               />
-             </div>
-             <div className="absolute inset-0 bg-medical-blue/20 rounded-2xl transform rotate-3"></div>
-           </div>
-         </div>
-       </div>
-     </section>
+              </div>
+            </div>
 
-     {/* Features Section - UNCHANGED */}
-     <section className="py-20">
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-         <div className="text-center mb-16">
-           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-features-title">
-             Advanced Medical AI at Your Service
-           </h2>
-           <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-features-description">
-             Our platform combines cutting-edge AI with medical knowledge to provide accurate, 
-             location-aware health guidance when you need it most.
-           </p>
-         </div>
-         
-         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-           <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-analysis">
-             <CardContent className="p-6">
-               <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                 <Bot className="text-white text-xl" />
-               </div>
-               <h3 className="text-xl font-semibold text-gray-900 mb-3">AI Symptom Analysis</h3>
-               <p className="text-medical-gray">
-                 Advanced AI powered by medical knowledge graphs analyzes your symptoms 
-                 and provides evidence-based recommendations tailored to your condition.
-               </p>
-             </CardContent>
-           </Card>
-           
-           <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-location">
-             <CardContent className="p-6">
-               <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                 <MapPin className="text-white text-xl" />
-               </div>
-               <h3 className="text-xl font-semibold text-gray-900 mb-3">Location-Aware</h3>
-               <p className="text-medical-gray">
-                 Automatically detects your location to find medicines available in local 
-                 pharmacies, considering regional regulations and availability.
-               </p>
-             </CardContent>
-           </Card>
-           
-           <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-medicine">
-             <CardContent className="p-6">
-               <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                 <Pill className="text-white text-xl" />
-               </div>
-               <h3 className="text-xl font-semibold text-gray-900 mb-3">Medicine Finder</h3>
-               <p className="text-medical-gray">
-                 Find local prescription and alternative medicine options, with clear, safe dosage and usage guidance.
-               </p>
-             </CardContent>
-           </Card>
-           
-           <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-language">
-             <CardContent className="p-6">
-               <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                 <Languages className="text-white text-xl" />
-               </div>
-               <h3 className="text-xl font-semibold text-gray-900 mb-3">Multilingual Support</h3>
-               <p className="text-medical-gray">
-                 SEALION excels at Southeast Asian languages and cultural nuances, understanding local medical terms and traditional remedy contexts, 
-                 and allowing you to communicate in your preferred language with automatic translation capabilities.
-               </p>
-             </CardContent>
-           </Card>
-         </div>
-       </div>
-     </section>
+            <div>
+              <img 
+                src="https://www.michiganstateuniversityonline.com/wp-content/uploads/sites/3/2020/10/What-is-healthcare-management.jpeg?w=750&h=375&crop=1" 
+                alt="Business use cases" 
+                className="rounded-xl shadow-lg w-full"
+                data-testid="business-use-cases"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
 
-     {/* How It Works Section - UNCHANGED */}
-     <section id="how-it-works" className="py-20 bg-medical-light">
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-         <div className="text-center mb-16">
-           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-how-it-works-title">
-             How It Works
-           </h2>
-           <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-how-it-works-description">
-             Get the medical help you need in just a few simple steps, anywhere in the world.
-           </p>
-         </div>
-         
-         <div className="grid lg:grid-cols-3 gap-8">
-           <div className="text-center">
-             <div className="w-20 h-20 bg-medical-blue text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold" data-testid="step-1-icon">
-               1
-             </div>
-             <h3 className="text-xl font-semibold mb-3" data-testid="step-1-title">Describe Symptoms</h3>
-             <p className="text-medical-gray" data-testid="step-1-description">
-               Tell our AI assistant about your symptoms in natural language, 
-               just like talking to a doctor.
-             </p>
-           </div>
-           
-           <div className="text-center">
-             <div className="w-20 h-20 bg-medical-blue text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold" data-testid="step-2-icon">
-               2
-             </div>
-             <h3 className="text-xl font-semibold mb-3" data-testid="step-2-title">Get AI Analysis</h3>
-             <p className="text-medical-gray" data-testid="step-2-description">
-               Our medical AI analyzes your symptoms and provides personalized 
-               recommendations based on medical knowledge.
-             </p>
-           </div>
-           
-           <div className="text-center">
-             <div className="w-20 h-20 bg-medical-blue text-white rounded-full flex items-center justify-center mx-auto mb-6 text-2xl font-bold" data-testid="step-3-icon">
-               3
-             </div>
-             <h3 className="text-xl font-semibold mb-3" data-testid="step-3-title">Find Local Medicine</h3>
-             <p className="text-medical-gray" data-testid="step-3-description">
-               Locate recommended medicines at nearby pharmacies with real-time 
-               availability and navigation.
-             </p>
-           </div>
-         </div>
-       </div>
-     </section>
+      {/* How It Works */}
+      <section id="how-it-works" className="py-20 bg-medical-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-how-it-works-title">
+              How It Works
+            </h2>
+            <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-how-it-works-description">
+              Get the medical help you need in just a few simple steps, anywhere in the world.
+            </p>
+          </div>
 
-     {/* Demo Section - UPDATED FOR USER JOURNEY #2 */}
-     <section id="demo" className="py-20 bg-white">
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-         <div className="text-center mb-12">
-           <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-demo-title">
-             Try Our Medical Assistant
-           </h2>
-           <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-demo-description">
-             Experience different user journeys and see how our AI adapts to various medical scenarios
-           </p>
-         </div>
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            <div>
+              <img 
+                src="https://images.unsplash.com/photo-1584820927498-cfe5211fd8bf?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=800&h=600" 
+                alt="Traveler health assistance" 
+                className="rounded-xl shadow-lg w-full"
+                data-testid="img-traveler-assistance"
+              />
+            </div>
+            <div className="space-y-8">
+              <div className="flex items-start space-x-4" data-testid="step-describe-symptoms">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">1</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Describe Your Symptoms</h3>
+                  <p className="text-medical-gray">
+                    Begin chatting with our AI assistant and share your symptoms in any Southeast Asian language.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4" data-testid="step-ai-analysis">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">2</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">AI Analysis & Recommendations</h3>
+                  <p className="text-medical-gray">
+                    The AI made up of SEALION LLM analyzes symptoms using GraphRAG technology and Model Context Protocol , cross-referencing medical databases and trusted sites for evidence-based treatment recommendations with location awareness for clinics and convenient store..
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4" data-testid="step-medicine-search">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">3</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Local Medicine Search</h3>
+                  <p className="text-medical-gray">
+                    Find available medicines in your current location, including local alternatives and over-the-counter options.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4" data-testid="step-pharmacy-finder">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">4</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Find Nearby Pharmacies</h3>
+                  <p className="text-medical-gray">
+                    Get an interactive map with nearby pharmacies and stores where you can purchase the recommended medicines.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Business Use Cases */}
+      <section id="business" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-features-title">
+              Business Use Cases
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Travel Insurance Companies */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-ai">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Shield className="text-white text-xl" /> {/* Changed from Bot */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Travel Insurance Companies</h3>
+                <p className="text-medical-gray">
+                  Bundle the chatbot as a value-added service for policyholders abroad (reduced claims via preventive guidance).
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Airlines / Travel Agencies */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-language">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Plane className="text-white text-xl" /> {/* Changed from Languages */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Airlines / Travel Agencies</h3>
+                <p className="text-medical-gray">
+                  Offer the chatbot to premium customers as a travel wellness companion.
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Pharmacies & Healthcare Chains */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-medicine">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Stethoscope className="text-white text-xl" /> {/* Changed from Pill */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Pharmacies & Healthcare Chains</h3>
+                <p className="text-medical-gray">
+                  Use it as a digital triage & referral tool that funnels customers into local clinics.
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Corporate Travel Programs */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-location">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Briefcase className="text-white text-xl" /> {/* Changed from MapPin */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Corporate Travel Programs</h3>
+                <p className="text-medical-gray">
+                  Provide to employees on overseas assignments for duty-of-care compliance.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Live Demo Section */}
+      <section id="demo" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-demo-title">
+              Try Our Medical Assistant
+            </h2>
+            <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-demo-description">
+              Experience how our AI-powered assistant works. This is a demonstration using real medical data.
+            </p>
+          </div>
 
          <Tabs defaultValue="journey1" className="w-full">
-           <TabsList className="grid w-full grid-cols-3 mb-8">
+            <TabsList className="grid w-full grid-cols-3 mb-8">
              <TabsTrigger value="journey1" className="data-[state=active]:bg-medical-blue data-[state=active]:text-white">
                <MapPin className="mr-2" size={16} />
-               User Journey #1
-             </TabsTrigger>
+                  User Journey #1
+              </TabsTrigger>
              <TabsTrigger value="journey2" className="data-[state=active]:bg-medical-blue data-[state=active]:text-white">
                <MapPin className="mr-2" size={16} />
-               User Journey #2
-             </TabsTrigger>
+                  User Journey #2
+              </TabsTrigger>
              <TabsTrigger value="journey3" className="data-[state=active]:bg-medical-blue data-[state=active]:text-white">
                <MapPin className="mr-2" size={16} />
-               User Journey #3
-             </TabsTrigger>
-           </TabsList>
-
+                  User Journey #3
+              </TabsTrigger>
+            </TabsList>
+            
            <TabsContent value="journey1" className="space-y-8">
              <div className="grid lg:grid-cols-2 gap-8">
                <div>
-                 <ChatInterface />
-               </div>
+                  <ChatInterface />
+                </div>
                <div className="space-y-4">
                  <PharmacyMap city="Bangkok" country="Thailand" />
-               </div>
-             </div>
-           </TabsContent>
-
+                </div>
+              </div>
+            </TabsContent>
+            
            {/* UPDATED USER JOURNEY #2 WITH INTEGRATION */}
            <TabsContent value="journey2" className="space-y-8">
              <div className="grid lg:grid-cols-2 gap-8">
-               <div>
+                <div>
                  <ChatInterface2 
                    onMedicinesUpdate={setJourney2Medicines}
                    onLocationUpdate={setJourney2Location}
@@ -289,68 +456,148 @@ export default function Home() {
                    country={journey2Location.country}
                    medicines={journey2Medicines}
                  />
-               </div>
-             </div>
-           </TabsContent>
-
+                </div>
+              </div>
+            </TabsContent>
+            
            <TabsContent value="journey3" className="space-y-8">
              <div className="grid lg:grid-cols-2 gap-8">
                <div>
-                 <ChatInterface3 />
-               </div>
+                  <ChatInterface3 />
+                </div>
                <div className="space-y-4">
                  <PharmacyMap3 city="Manila" country="Philippines" />
-               </div>
-             </div>
-           </TabsContent>
-         </Tabs>
-       </div>
-     </section>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+      </section>
 
-     {/* Footer - UNCHANGED */}
-     <footer className="bg-gray-900 text-white py-12">
-       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-         <div className="grid md:grid-cols-4 gap-8">
-           <div>
-             <h3 className="text-lg font-semibold mb-4">Medical Assistant</h3>
-             <p className="text-gray-400 text-sm">
-               AI-powered health companion for travelers worldwide.
-             </p>
-           </div>
-           
-           <div>
-             <h4 className="text-sm font-semibold mb-3">Features</h4>
-             <ul className="space-y-2 text-sm text-gray-400">
-               <li>Symptom Analysis</li>
-               <li>Medicine Finder</li>
-               <li>Pharmacy Locator</li>
-               <li>Multi-language</li>
-             </ul>
-           </div>
-           
-           <div>
-             <h4 className="text-sm font-semibold mb-3">Support</h4>
-             <ul className="space-y-2 text-sm text-gray-400">
-               <li>Help Center</li>
-               <li>Contact Us</li>
-               <li>Privacy Policy</li>
-               <li>Terms of Service</li>
-             </ul>
-           </div>
-           
-           <div>
-             <h4 className="text-sm font-semibold mb-3">Connect</h4>
-             <p className="text-gray-400 text-sm mb-4">
-               Stay updated with our latest features and medical AI developments.
-             </p>
-           </div>
-         </div>
-         
-         <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400 text-sm">
-           <p>© 2024 Medical Assistant. For informational purposes only. Always consult healthcare professionals.</p>
-         </div>
-       </div>
-     </footer>
-   </div>
- );
+      {/* Trust & Safety */}
+      <section className="py-20 bg-medical-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-12">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-trust-title">
+              Built for Trust & Safety
+            </h2>
+            <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-trust-description">
+              Your health data is protected with enterprise-grade security and privacy standards.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center" data-testid="trust-feature-hipaa">
+              <div className="w-16 h-16 bg-medical-success rounded-full flex items-center justify-center mx-auto mb-4">
+                <Shield className="text-white text-2xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">HIPAA Compliant</h3>
+              <p className="text-medical-gray">
+                Full compliance with healthcare privacy regulations to protect your medical information.
+              </p>
+            </div>
+            
+            <div className="text-center" data-testid="trust-feature-encryption">
+              <div className="w-16 h-16 bg-medical-success rounded-full flex items-center justify-center mx-auto mb-4">
+                <Lock className="text-white text-2xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">End-to-End Encryption</h3>
+              <p className="text-medical-gray">
+                All conversations and medical data are encrypted and never stored permanently.
+              </p>
+            </div>
+            
+            <div className="text-center" data-testid="trust-feature-supervision">
+              <div className="w-16 h-16 bg-medical-success rounded-full flex items-center justify-center mx-auto mb-4">
+                <UserCheck className="text-white text-2xl" />
+              </div>
+              <h3 className="text-xl font-semibold text-gray-900 mb-3">Medical Supervision</h3>
+              <p className="text-medical-gray">
+                AI recommendations are based on trusted medical sources and supervised by healthcare professionals.
+              </p>
+            </div>
+          </div>
+
+          <Card className="mt-12 border border-gray-200">
+            <CardContent className="p-8">
+              <div className="flex items-start space-x-4">
+                <div className="w-12 h-12 bg-medical-warning rounded-lg flex items-center justify-center flex-shrink-0">
+                  <AlertTriangle className="text-white" />
+                </div>
+                <div>
+                  <h3 className="font-semibold text-gray-900 mb-2" data-testid="text-medical-disclaimer-title">
+                    Important Medical Disclaimer
+                  </h3>
+                  <p className="text-medical-gray text-sm leading-relaxed" data-testid="text-medical-disclaimer">
+                    This service provides general health information and should not replace professional medical advice, diagnosis, or treatment. 
+                    Always consult with qualified healthcare professionals for serious medical conditions. In case of medical emergencies, 
+                    contact local emergency services immediately.
+                  </p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="bg-gray-900 text-white py-16">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid md:grid-cols-4 gap-8">
+            <div className="md:col-span-2">
+              <div className="flex items-center mb-4">
+                <Stethoscope className="text-medical-blue text-2xl mr-3" />
+                <span className="text-xl font-semibold" data-testid="text-footer-brand">Personal Medical Assistant</span>
+              </div>
+              <p className="text-gray-400 mb-4 max-w-md" data-testid="text-footer-description">
+                AI-driven healthcare support for travelers who speaks in South Asian languages. Receive immediate health guidance, 
+                medicine recommendations, and local pharmacy locations wherever you are.
+              </p>
+              <a href="#demo">
+                <Button className="bg-medical-blue hover:bg-medical-blue-dark" data-testid="button-footer-trial">
+                  Start Free Trial
+                </Button>
+              </a>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Product</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#features" className="hover:text-white transition-colors" data-testid="link-footer-features">Features</a></li>
+                <li><a href="#how-it-works" className="hover:text-white transition-colors" data-testid="link-footer-how-it-works">How It Works</a></li>
+                <li><a href="#demo" className="hover:text-white transition-colors" data-testid="link-footer-demo">Demo</a></li>
+                <li><a href="#" className="hover:text-white transition-colors" data-testid="link-footer-api">API</a></li>
+              </ul>
+            </div>
+            
+            <div>
+              <h3 className="font-semibold mb-4">Support</h3>
+              <ul className="space-y-2 text-gray-400">
+                <li><a href="#" className="hover:text-white transition-colors" data-testid="link-footer-help">Help Center</a></li>
+                <li><a href="#" className="hover:text-white transition-colors" data-testid="link-footer-disclaimer">Medical Disclaimer</a></li>
+                <li><a href="#" className="hover:text-white transition-colors" data-testid="link-footer-privacy">Privacy Policy</a></li>
+                <li><a href="#" className="hover:text-white transition-colors" data-testid="link-footer-terms">Terms of Service</a></li>
+              </ul>
+            </div>
+          </div>
+          
+          <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
+            <p className="text-gray-400 text-sm" data-testid="text-copyright">
+              © 2025 Personal Medical Assistant. All rights reserved. Muhammad Iskandar and Shem Lim.
+            </p>
+            <div className="flex items-center space-x-6 mt-4 md:mt-0">
+              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <Shield className="text-medical-success" size={16} />
+                <span data-testid="text-footer-hipaa">HIPAA Compliant</span>
+              </div>
+              <div className="flex items-center space-x-2 text-sm text-gray-400">
+                <Lock className="text-medical-success" size={16} />
+                <span data-testid="text-footer-ssl">SSL Encrypted</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
 }

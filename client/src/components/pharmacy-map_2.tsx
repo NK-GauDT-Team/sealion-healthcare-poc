@@ -10,7 +10,6 @@ import {
   Crosshair,
   Wifi,
   WifiOff,
-  Loader2,
 } from "lucide-react";
 
 interface PharmacyMatch {
@@ -37,8 +36,8 @@ interface Pharmacy {
 }
 
 interface WSResultPayload {
-  center?: { lat: number; lon: number } | null; // raw GPS echoed back
-  city?: string | null;                          // null in gps-only
+  center?: { lat: number; lon: number } | null;
+  city?: string | null;
   pharmacies: Pharmacy[];
   source?: string;
   fallbackUsed?: boolean;
@@ -62,7 +61,7 @@ export default function PharmacyMap2({
   country = "Vietnam",
   className = "",
   medicines = [],
-  websocketUrl = "ws://localhost:8765",
+  websocketUrl = "ws://3.95.212.252:8765",
 }: PharmacyMapProps) {
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [loading, setLoading] = useState(false);
@@ -76,7 +75,7 @@ export default function PharmacyMap2({
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<NodeJS.Timeout | null>(null);
 
-  // latest good GPS (we also track accuracy+timestamp for freshness)
+  // latest good GPS
   const gpsRef = useRef<{ lat: number; lon: number } | null>(null);
   const gpsAccRef = useRef<number | null>(null);
   const gpsTsRef = useRef<number | null>(null);
@@ -110,7 +109,7 @@ export default function PharmacyMap2({
               const payload = data as WSResultPayload;
               setPharmacies(Array.isArray((payload as any).pharmacies) ? (payload as any).pharmacies : []);
               setMeta({ source: (payload as any).source, fallbackUsed: (payload as any).fallbackUsed, message: (payload as any).message });
-              setCenter(payload.center ?? null); // raw GPS echoed by backend
+              setCenter(payload.center ?? null);
               setLoading(false);
               return;
             }
@@ -185,7 +184,6 @@ export default function PharmacyMap2({
       ...(extra || {}),
     };
 
-    // ensure we include a user_location (prefer fresh explicit)
     if (extra?.user_location) {
       payload.user_location = extra.user_location;
     } else if (gpsRef.current) {
@@ -213,19 +211,17 @@ export default function PharmacyMap2({
       return;
     }
 
-    // clear any previous watcher
     stopWatch();
-
     const started = Date.now();
     let best: GeolocationPosition | null = null;
 
     watchIdRef.current = navigator.geolocation.watchPosition(
       (pos) => {
-        const { latitude, longitude, accuracy } = pos.coords; // meters
+        const { latitude, longitude, accuracy } = pos.coords;
         if (!best || (accuracy && accuracy < best.coords.accuracy)) best = pos;
 
-        const goodEnough = accuracy !== null && accuracy !== undefined && accuracy <= 80; // tune 30–100
-        const waitedTooLong = Date.now() - started > 15_000; // 15s cap
+        const goodEnough = accuracy !== null && accuracy !== undefined && accuracy <= 80;
+        const waitedTooLong = Date.now() - started > 15_000;
 
         if (goodEnough || waitedTooLong) {
           stopWatch();
@@ -234,7 +230,6 @@ export default function PharmacyMap2({
           gpsAccRef.current = Math.round(best.coords.accuracy || 0);
           gpsTsRef.current = best.timestamp;
 
-          // Immediate search with fresh GPS & include accuracy for logging
           sendSearch({
             user_location: {
               lat: gpsRef.current.lat,
@@ -252,7 +247,7 @@ export default function PharmacyMap2({
       {
         enableHighAccuracy: true,
         timeout: 25_000,
-        maximumAge: 0, // do not accept cached positions
+        maximumAge: 0,
       }
     );
   };
@@ -291,22 +286,16 @@ export default function PharmacyMap2({
     }
   };
 
-  // Open Google Maps (GPS-only):
+  // Open Google Maps (walking) — origin forced if available
   const handleNavigation = (p: Pharmacy) => {
     if (!p.latitude || !p.longitude) return;
-
-    // Prefer the same origin used by backend/OSRM
-    const origin = center || gpsRef.current; // `center` is echoed back by backend; gpsRef is your last device fix
+    const origin = center || gpsRef.current;
     const dest = `${p.latitude},${p.longitude}`;
-
-    // If we have an origin, force it. Otherwise, let Google infer.
     const url = origin
-      ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=driving&dir_action=navigate`
-      : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=driving&dir_action=navigate`;
-
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=walking&dir_action=navigate`
+      : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=walking&dir_action=navigate`;
     window.open(url, "_blank");
   };
-
 
   const renderStatusSummary = (p: Pharmacy) => {
     const counts = (p.matches || []).reduce<Record<PharmacyMatch["status"], number>>((acc, m) => {
@@ -487,13 +476,13 @@ export default function PharmacyMap2({
           )}
 
           {/* Map placeholder */}
-          <div className="mt-4 bg-gray-100 rounded-lg h-48 flex items-center justify-center">
+          {/* <div className="mt-4 bg-gray-100 rounded-lg h-48 flex items-center justify-center">
             <div className="text-center">
               <MapPin className="mx-auto mb-2" size={32} />
               <p className="text-sm text-medical-gray">Interactive map view</p>
               <p className="text-xs text-gray-500 mt-1">Click a pharmacy to see on map</p>
             </div>
-          </div>
+          </div> */}
         </CardContent>
       </Card>
     </div>
