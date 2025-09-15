@@ -122,7 +122,7 @@ interface ChatInterface2Props {
 
 export default function ChatInterface2({
   initialMessages = [],
-  websocketUrl = "wss://3.95.212.252:8765",
+  websocketUrl = "ws://3.95.212.252:8765",
   onMedicinesUpdate,
   onLocationUpdate,
 }: ChatInterface2Props) {
