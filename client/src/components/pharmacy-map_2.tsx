@@ -1,422 +1,490 @@
-import { useState, useEffect } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Phone, Clock, Navigation } from "lucide-react";
- 
+import {
+  MapPin,
+  Phone,
+  Clock,
+  Navigation,
+  Crosshair,
+  Wifi,
+  WifiOff,
+} from "lucide-react";
+
+interface PharmacyMatch {
+  medicineName: string;
+  status: "in_stock" | "likely_in_stock" | "call_to_confirm" | "out_of_stock";
+  score: number;
+  url?: string;
+}
 
 interface Pharmacy {
   id: string;
   name: string;
-  address: string;
-  latitude: string;
-  longitude: string;
-  country: string;
-  city: string;
+  address?: string;
+  latitude?: string;
+  longitude?: string;
+  country?: string;
+  city?: string;
   phoneNumber?: string;
   openingHours?: string;
+  matches?: PharmacyMatch[];
+  bestScore?: number;
+  distance_km?: number;
+  duration_min?: number;
+}
+
+interface WSResultPayload {
+  center?: { lat: number; lon: number } | null;
+  city?: string | null;
+  pharmacies: Pharmacy[];
+  source?: string;
+  fallbackUsed?: boolean;
+  message?: string;
+  radius_km?: number;
 }
 
 interface PharmacyMapProps {
   country?: string;
-  city?: string;
   className?: string;
+  medicines?: Array<{
+    name: string;
+    dosage?: string;
+    description?: string;
+    localAvailability?: string;
+  }>;
+  websocketUrl?: string;
 }
-const SCRIPTED_LOCATION = 'Ho Chi Minh City'
-const SCRIPTED_MEDICINES = [
-  {
-    step: 1,
-    medicines: [
-      {
-        name: "Domperidone 10mg (Motilium)",
-        dosage: "1 tablet • 30 min before meals",
-        availability: "Available",
-        description: "Anti-emetic for nausea and bloating relief"
-      },
-      {
-        name: "Simethicone 40mg (Air-X)",
-        dosage: "1-2 tablets • After meals",
-        availability: "Available",
-        description: "Anti-flatulent for gas and bloating"
-      }
-    ]
-  },
-  {
-    step: 2,
-    medicines: [
-      {
-        name: "Metoclopramide 10mg (Primperan)",
-        dosage: "1 tablet • 30 min before meals",
-        availability: "Available",
-        description: "Stronger antiemetic for persistent nausea"
-      },
-      {
-        name: "Paracetamol 500mg (Panadol Extra)",
-        dosage: "1-2 tablets • Every 4-6 hours",
-        availability: "Available",
-        description: "Pain relief with caffeine for better absorption"
-      }
-    ]
-  },
-  {
-    step: 3,
-    medicines: [
-      {
-        name: "Loperamide 2mg (Imodium)",
-        dosage: "2 tablets initially • Then 1 after each loose stool",
-        availability: "Available",
-        description: "Anti-diarrheal medication for symptom control"
-      },
-      {
-        name: "ORS (Oresol) Sachets",
-        dosage: "1 sachet • Mix with 200ml water",
-        availability: "Available",
-        description: "Oral rehydration salts for dehydration prevention"
-      }
-    ]
-  }
-];
 
-export default function PharmacyMap({ country = "Thailand", city = "Bangkok", className = "" }: PharmacyMapProps) {
-  const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
-  const [medicineStep, setMedicineStep] = useState(0);
-  const [isTransitioning, setIsTransitioning] = useState(false);
+export default function PharmacyMap2({
+  country = "Vietnam",
+  className = "",
+  medicines = [],
+  websocketUrl = "ws://3.95.212.252:8765",
+}: PharmacyMapProps) {
+  const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [onlyMatches, setOnlyMatches] = useState(true);
+  const [selectedPharmacy, setSelectedPharmacy] = useState<string | null>(null);
+  const [meta, setMeta] = useState<{ source?: string; fallbackUsed?: boolean; message?: string }>({});
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("Connecting...");
+  const [center, setCenter] = useState<{ lat: number; lon: number } | null>(null);
 
-  // Handle keydown events to trigger medicine changes
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectRef = useRef<NodeJS.Timeout | null>(null);
+
+  // latest good GPS
+  const gpsRef = useRef<{ lat: number; lon: number } | null>(null);
+  const gpsAccRef = useRef<number | null>(null);
+  const gpsTsRef = useRef<number | null>(null);
+  const watchIdRef = useRef<number | null>(null);
+
+  // Connect WS
   useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (medicineStep < SCRIPTED_MEDICINES.length && !isTransitioning) {
-        setIsTransitioning(true);
-        
-        setTimeout(() => {
-          setMedicineStep(prev => prev + 1);
-          setIsTransitioning(false);
-        }, 4000); // Brief transition animation
+    const connect = () => {
+      try {
+        if (wsRef.current?.readyState === WebSocket.OPEN) wsRef.current.close();
+        wsRef.current = new WebSocket(websocketUrl);
+
+        wsRef.current.onopen = () => {
+          setIsConnected(true);
+          setConnectionStatus("Connected");
+          if (reconnectRef.current) {
+            clearTimeout(reconnectRef.current);
+            reconnectRef.current = null;
+          }
+        };
+
+        wsRef.current.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            const t = String(data?.type || "").toLowerCase();
+            if (t === "connection") {
+              setConnectionStatus(data.status === "ready" ? "GraphRAG Ready" : "Waiting for documents...");
+              return;
+            }
+            if (t === "pharmacy_search_result") {
+              const payload = data as WSResultPayload;
+              setPharmacies(Array.isArray((payload as any).pharmacies) ? (payload as any).pharmacies : []);
+              setMeta({ source: (payload as any).source, fallbackUsed: (payload as any).fallbackUsed, message: (payload as any).message });
+              setCenter(payload.center ?? null);
+              setLoading(false);
+              return;
+            }
+          } catch {
+            setLoading(false);
+          }
+        };
+
+        wsRef.current.onerror = () => {
+          setIsConnected(false);
+          setConnectionStatus("Connection error");
+          setLoading(false);
+        };
+
+        wsRef.current.onclose = () => {
+          setIsConnected(false);
+          setConnectionStatus("Disconnected - Reconnecting...");
+          setLoading(false);
+          if (!reconnectRef.current) {
+            reconnectRef.current = setTimeout(() => {
+              reconnectRef.current = null;
+              connect();
+            }, 2000);
+          }
+        };
+      } catch {
+        setConnectionStatus("Failed to connect");
       }
     };
+    connect();
+    return () => {
+      if (reconnectRef.current) {
+        clearTimeout(reconnectRef.current);
+        reconnectRef.current = null;
+      }
+      if (wsRef.current) wsRef.current.close();
+      if (watchIdRef.current !== null && navigator.geolocation) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+      }
+    };
+  }, [websocketUrl]);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [medicineStep, isTransitioning]);
+  // GPS-only payload
+  const requestPayload = useMemo(
+    () => ({
+      radius_km: 2,
+      limit: 4,
+      medicines: (medicines || []).map((m) => ({
+        name: m?.name ?? "",
+        dosage: m?.dosage ?? "",
+      })),
+    }),
+    [medicines]
+  );
 
-  // Local pharmacies (no API calls)
-  const LOCAL_PHARMACIES: Pharmacy[] = [
-    {
-      id: 'pharmacy-pharmacity',
-      name: 'Pharmacity',
-      address: '135 Nguyen Hue, District 1, Ho Chi Minh City',
-      latitude: '10.7779', 
-      longitude: '106.7019',
-      country: 'Vietnam',
-      city: 'Ho Chi Minh City',
-      phoneNumber: '+84-28-3821-5555',
-      openingHours: '8:00 AM - 10:00 PM'
-    },
-    {
-      id: 'pharmacy-guardian-vn',
-      name: 'Guardian Vietnam',
-      address: 'Vincom Center, 72 Le Thanh Ton, District 1',
-      latitude: '10.7759', 
-      longitude: '106.6999',
-      country: 'Vietnam',
-      city: 'Ho Chi Minh City',
-      phoneNumber: '+84-28-3936-9999',
-      openingHours: '9:00 AM - 10:00 PM'
-    },
-    {
-      id: 'pharmacy-long-chau',
-      name: 'Long Chau Pharmacy',
-      address: '230 Pasteur, District 3, Ho Chi Minh City',
-      latitude: '10.7749', 
-      longitude: '106.7029',
-      country: 'Vietnam',
-      city: 'Ho Chi Minh City',
-      phoneNumber: '+84-1800-6928',
-      openingHours: '7:30 AM - 10:00 PM'
+  // Auto-search when medicines change AND we have a fresh GPS (≤60s old)
+  useEffect(() => {
+    if (!isConnected) return;
+    if (!(requestPayload.medicines?.length > 0)) return;
+    const fresh = gpsRef.current && gpsTsRef.current && (Date.now() - gpsTsRef.current) <= 60_000;
+    if (!fresh) return;
+    sendSearch();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [JSON.stringify(requestPayload), isConnected]);
+
+  const sendSearch = (extra?: Partial<typeof requestPayload> & { user_location?: any }) => {
+    if (wsRef.current?.readyState !== WebSocket.OPEN) return;
+    const rid = String(Date.now());
+    setLoading(true);
+    const payload: any = {
+      ...requestPayload,
+      ...(extra || {}),
+    };
+
+    if (extra?.user_location) {
+      payload.user_location = extra.user_location;
+    } else if (gpsRef.current) {
+      payload.user_location = {
+        lat: gpsRef.current.lat,
+        lon: gpsRef.current.lon,
+        accuracy_m: gpsAccRef.current ?? undefined,
+        ts: gpsTsRef.current ?? undefined,
+      };
     }
-  ];
 
-  const pharmacies: Pharmacy[] = LOCAL_PHARMACIES;
-  const isLoading = false;
-
-  const calculateDistance = (lat1: string, lon1: string, lat2: string, lon2: string) => {
-    // Simple distance calculation (Haversine formula approximation)
-    const R = 6371; // Earth's radius in km
-    const dLat = (parseFloat(lat2) - parseFloat(lat1)) * Math.PI / 180;
-    const dLon = (parseFloat(lon2) - parseFloat(lon1)) * Math.PI / 180;
-    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-              Math.cos(parseFloat(lat1) * Math.PI / 180) * Math.cos(parseFloat(lat2) * Math.PI / 180) *
-              Math.sin(dLon/2) * Math.sin(dLon/2);
-    const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-    const distance = R * c;
-    return distance;
+    wsRef.current.send(JSON.stringify({ type: "pharmacy_search", rid, payload }));
   };
 
-  // Simulate user location (Bangkok city center)
-  const userLat = "10.7769";
-  const userLon = "106.7009";
+  const stopWatch = () => {
+    if (watchIdRef.current !== null && navigator.geolocation) {
+      navigator.geolocation.clearWatch(watchIdRef.current);
+      watchIdRef.current = null;
+    }
+  };
 
-  const pharmaciesWithDistance = (pharmacies && medicineStep > 0) 
-    ? pharmacies.map((pharmacy: Pharmacy) => ({
-        ...pharmacy,
-        distance: calculateDistance(userLat, userLon, pharmacy.latitude, pharmacy.longitude)
-      })).sort((a: any, b: any) => a.distance - b.distance)
-    : [];
+  const handleUseMyLocation = () => {
+    if (!navigator.geolocation) {
+      alert("Geolocation is not supported by your browser.");
+      return;
+    }
 
-  // Get current medicines to display
-  const currentMedicines = medicineStep > 0 && medicineStep <= SCRIPTED_MEDICINES.length 
-    ? SCRIPTED_MEDICINES[medicineStep - 1].medicines 
-    : [];
+    stopWatch();
+    const started = Date.now();
+    let best: GeolocationPosition | null = null;
 
-  if (isLoading) {
+    watchIdRef.current = navigator.geolocation.watchPosition(
+      (pos) => {
+        const { latitude, longitude, accuracy } = pos.coords;
+        if (!best || (accuracy && accuracy < best.coords.accuracy)) best = pos;
+
+        const goodEnough = accuracy !== null && accuracy !== undefined && accuracy <= 80;
+        const waitedTooLong = Date.now() - started > 15_000;
+
+        if (goodEnough || waitedTooLong) {
+          stopWatch();
+          if (!best) return;
+          gpsRef.current = { lat: best.coords.latitude, lon: best.coords.longitude };
+          gpsAccRef.current = Math.round(best.coords.accuracy || 0);
+          gpsTsRef.current = best.timestamp;
+
+          sendSearch({
+            user_location: {
+              lat: gpsRef.current.lat,
+              lon: gpsRef.current.lon,
+              accuracy_m: gpsAccRef.current,
+              ts: gpsTsRef.current,
+            },
+          });
+        }
+      },
+      (err) => {
+        stopWatch();
+        alert(`Location error: ${err.message}`);
+      },
+      {
+        enableHighAccuracy: true,
+        timeout: 25_000,
+        maximumAge: 0,
+      }
+    );
+  };
+
+  const filteredPharmacies = useMemo(() => {
+    if (!onlyMatches) return pharmacies;
+    return pharmacies.filter((p) => (p.matches || []).some((m) => m.status !== "out_of_stock"));
+  }, [pharmacies, onlyMatches]);
+
+  const statusLabel = (status: PharmacyMatch["status"]) => {
+    switch (status) {
+      case "in_stock":
+        return "In stock";
+      case "likely_in_stock":
+        return "Likely in stock";
+      case "call_to_confirm":
+        return "Call to confirm";
+      case "out_of_stock":
+      default:
+        return "Out of stock";
+    }
+  };
+
+  const statusBadge = (status: PharmacyMatch["status"], count?: number) => {
+    const text = statusLabel(status) + (count && count > 1 ? ` (${count})` : "");
+    switch (status) {
+      case "in_stock":
+        return <Badge className="text-xs bg-green-100 text-green-800">{text}</Badge>;
+      case "likely_in_stock":
+        return <Badge className="text-xs bg-emerald-100 text-emerald-800">{text}</Badge>;
+      case "call_to_confirm":
+        return <Badge className="text-xs bg-amber-100 text-amber-800">{text}</Badge>;
+      case "out_of_stock":
+      default:
+        return <Badge className="text-xs bg-red-100 text-red-800">{text}</Badge>;
+    }
+  };
+
+  // Open Google Maps (walking) — origin forced if available
+  const handleNavigation = (p: Pharmacy) => {
+    if (!p.latitude || !p.longitude) return;
+    const origin = center || gpsRef.current;
+    const dest = `${p.latitude},${p.longitude}`;
+    const url = origin
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=walking&dir_action=navigate`
+      : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=walking&dir_action=navigate`;
+    window.open(url, "_blank");
+  };
+
+  const renderStatusSummary = (p: Pharmacy) => {
+    const counts = (p.matches || []).reduce<Record<PharmacyMatch["status"], number>>((acc, m) => {
+      acc[m.status] = (acc[m.status] || 0) + 1;
+      return acc;
+    }, {} as any);
+    const entries = Object.entries(counts) as Array<[PharmacyMatch["status"], number]>;
+    if (entries.length === 0) return null;
+    if (entries.length === 1) return statusBadge(entries[0][0]);
     return (
-      <div className={`space-y-6 ${className}`}>
-        <div className="animate-pulse">
-          <div className="h-64 bg-gray-200 rounded-lg mb-4"></div>
-          <div className="space-y-2">
-            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2"></div>
-          </div>
-        </div>
+      <div className="flex flex-wrap gap-2">
+        {entries.map(([status, cnt]) => (
+          <span key={status}>{statusBadge(status, cnt)}</span>
+        ))}
       </div>
     );
-  }
+  };
 
   return (
-    <div className={`space-y-6 ${className}`}>
-      {/* Medicine Recommendations */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center justify-between text-lg" data-testid="text-medicine-recommendations">
-            <div className="flex items-center">
-              <MapPin className="text-medical-blue mr-2" size={20} />
+    <div className={`space-y-4 ${className}`}>
+      {/* Connection status */}
+      <div className="flex items-center justify-end text-xs text-medical-gray">
+        {isConnected ? <Wifi size={14} className="text-green-500 mr-1" /> : <WifiOff size={14} className="text-red-500 mr-1" />}
+        <span>{connectionStatus}</span>
+      </div>
+
+      {/* Recommended Medicines */}
+      <Card className="shadow-lg">
+        <CardHeader className="pb-3">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-lg flex items-center">
+              <MapPin className="mr-2" size={20} />
               Recommended Medicines
-            </div>
-            {/* {medicineStep > 0 && (
-              <Badge variant="outline" className="text-xs">
-                Step {medicineStep}/3
-              </Badge>
-            )} */}
-          </CardTitle>
+            </CardTitle>
+          </div>
         </CardHeader>
         <CardContent>
-          <div className={`space-y-3 transition-opacity duration-500 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-            {currentMedicines.map((medicine, index) => (
-              <div key={`${medicineStep}-${index}`} className="border border-gray-200 rounded-lg p-3" data-testid={`medicine-card-${index}`}>
-                <div className="flex items-center justify-between mb-2">
-                  <span className="font-medium text-sm">{medicine.name}</span>
-                  <Badge 
-                    className={`text-white ${
-                      medicine.availability === 'Available' 
-                        ? 'bg-medical-success' 
-                        : medicine.availability === 'Prescription' 
-                          ? 'bg-medical-warning' 
-                          : 'bg-medical-blue'
-                    }`} 
-                    data-testid={`badge-${medicine.availability.toLowerCase()}`}
-                  >
-                    {medicine.availability}
-                  </Badge>
+          {medicines?.length ? (
+            <div className="space-y-3">
+              {medicines.map((m, i) => (
+                <div key={i} className="bg-medical-light p-3 rounded-lg">
+                  <div className="flex items-start justify-between">
+                    <div className="pr-3">
+                      <h4 className="font-semibold text-sm">{m.name}</h4>
+                      {m.description && <p className="text-xs text-medical-gray mt-1">{m.description}</p>}
+                      {m.dosage && <p className="text-xs text-medical-blue mt-1">{m.dosage}</p>}
+                    </div>
+                    {m.localAvailability && (
+                      <Badge className="text-xs bg-green-100 text-green-800 self-start">{m.localAvailability}</Badge>
+                    )}
+                  </div>
                 </div>
-                <p className="text-xs text-medical-gray">{medicine.dosage}</p>
-                <p className="text-xs text-medical-gray">{medicine.description}</p>
-                {/* <p className="text-xs text-medical-blue mt-1">
-                  {medicineStep > 0 
-                    ? `Found at ${pharmaciesWithDistance.length} nearby locations`
-                    : 'Press any key to find nearby locations'
-                  }
-                </p> */}
-              </div>
-            ))}
-          </div>
-
-          {/* Instruction for initial state */}
-          {medicineStep === 0 && (
-            <div className="mt-4 text-center">
-              {/* <p className="text-xs text-medical-gray bg-blue-50 p-3 rounded-lg border border-blue-200">
-                Press any key to start finding medicines and nearby pharmacies
-              </p> */}
+              ))}
             </div>
-          )}
-
-          {/* Instruction for scripted demo */}
-          {/* {medicineStep < SCRIPTED_MEDICINES.length && medicineStep > 0 && !isTransitioning && (
-            <div className="mt-4 text-center">
-              <p className="text-xs text-medical-gray bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-                Press any key to see next medicine recommendations ({medicineStep + 1}/{SCRIPTED_MEDICINES.length})
-              </p>
-            </div>
-          )} */}
-
-          {medicineStep >= SCRIPTED_MEDICINES.length && (
-            <div className="mt-4 text-center">
-              <p className="text-xs text-medical-gray bg-green-50 p-2 rounded-lg border border-green-200">
-                All medicine recommendations completed!
-              </p>
+          ) : (
+            <div className="text-center py-8 text-medical-gray">
+              <p className="text-sm">No medicines recommended yet.</p>
+              <p className="text-xs mt-2">Describe your symptoms to get recommendations.</p>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Interactive Map - Only show when medicines are active */}
-      {medicineStep > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center text-lg" data-testid="text-nearby-pharmacies">
-              <MapPin className="text-medical-blue mr-2" size={20} />
-              Nearby Pharmacies
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {/* Map container with pharmacy locations */}
-            <div className="h-64 relative bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg overflow-hidden">
-              {/* Map background - using CSS to simulate map */}
-              <div className="absolute inset-0 opacity-20">
-                <div className="w-full h-full bg-gradient-to-br from-green-100 via-yellow-50 to-blue-100"></div>
-                <div className="absolute top-0 left-0 w-full h-full">
-                  {/* Street lines simulation */}
-                  <div className="absolute top-1/3 left-0 w-full h-0.5 bg-gray-300 transform -rotate-12"></div>
-                  <div className="absolute top-2/3 left-0 w-full h-0.5 bg-gray-300 transform rotate-12"></div>
-                  <div className="absolute left-1/3 top-0 w-0.5 h-full bg-gray-300 transform rotate-12"></div>
-                  <div className="absolute left-2/3 top-0 w-0.5 h-full bg-gray-300 transform -rotate-12"></div>
-                </div>
-              </div>
+      {/* Nearby Pharmacies */}
+      <Card className="shadow-lg">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-lg flex items-center">
+            <MapPin className="mr-2" size={20} />
+            Nearby Pharmacies
+          </CardTitle>
+        </CardHeader>
 
-              {/* User location marker */}
-              <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-10">
-                <div className="w-4 h-4 bg-red-500 rounded-full border-2 border-white shadow-lg pulse-animation"></div>
-                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 text-xs bg-white px-2 py-1 rounded shadow-md whitespace-nowrap">
-                  Your Location
-                </div>
-              </div>
+        <CardContent>
+          {/* GPS-only controls */}
+          <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
+            <div className="flex-1 flex items-center gap-2">
+              <Button variant="outline" onClick={handleUseMyLocation} disabled={!isConnected || loading}>
+                <Crosshair size={16} className="mr-1" />
+                Use my location
+              </Button>
+            </div>
 
-              {/* Pharmacy markers */}
-              {pharmaciesWithDistance.slice(0, 3).map((pharmacy: any, index: number) => {
-                const positions = [
-                  { top: '30%', left: '60%' }, // Boots Pharmacy
-                  { top: '65%', left: '35%' }, // Watsons
-                  { top: '40%', left: '75%' }, // Fascino Pharmacy
-                ];
-                
-                return (
-                  <div
-                    key={pharmacy.id}
-                    className={`absolute transform -translate-x-1/2 -translate-y-1/2 cursor-pointer z-20 ${
-                      selectedPharmacy?.id === pharmacy.id ? 'scale-110' : ''
-                    }`}
-                    style={positions[index]}
-                    onClick={() => setSelectedPharmacy(pharmacy)}
-                    data-testid={`pharmacy-marker-${index}`}
-                  >
-                    <div className="w-6 h-6 bg-medical-blue rounded-full border-2 border-white shadow-lg flex items-center justify-center hover:scale-110 transition-transform">
-                      <MapPin size={12} className="text-white" />
+            <label className="flex items-center gap-2 text-sm text-medical-gray">
+              <input type="checkbox" checked={onlyMatches} onChange={(e) => setOnlyMatches(e.target.checked)} />
+              Only show pharmacies with my medicines
+            </label>
+          </div>
+
+          {(meta.source || meta.fallbackUsed || meta.message) && (
+            <div className="text-xs text-gray-500 mb-2">
+              {meta.source ? <>Source: {meta.source}. </> : null}
+              {meta.fallbackUsed ? <>Fallback used. </> : null}
+              {meta.message ? <>{meta.message}</> : null}
+            </div>
+          )}
+
+          {loading ? (
+            <div className="text-center py-8">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 mx-auto" />
+              <p className="text-sm text-medical-gray mt-4">Finding pharmacies and checking availability…</p>
+            </div>
+          ) : filteredPharmacies.length ? (
+            <div className="space-y-3">
+              {filteredPharmacies.map((p) => (
+                <div
+                  key={p.id}
+                  className={`border rounded-lg p-3 transition-all cursor-pointer ${
+                    selectedPharmacy === p.id ? "border-medical-blue bg-medical-light" : "border-gray-200 hover:border-medical-blue/50"
+                  }`}
+                  onClick={() => setSelectedPharmacy(p.id)}
+                >
+                  <div className="flex justify-between items-start mb-2">
+                    <div className="flex items-center gap-2">
+                      <h4 className="font-semibold text-sm">{p.name}</h4>
+                      {typeof p.distance_km === "number" ? (
+                        <Badge variant="outline" className="text-xs">
+                          {p.distance_km} km{typeof p.duration_min === "number" ? ` • ${p.duration_min} min` : ""}
+                        </Badge>
+                      ) : null}
                     </div>
-                    {selectedPharmacy?.id === pharmacy.id && (
-                      <div className="absolute -top-20 left-1/2 transform -translate-x-1/2 bg-white p-2 rounded-lg shadow-lg border min-w-48 z-30">
-                        <h4 className="font-semibold text-sm">{pharmacy.name}</h4>
-                        <p className="text-xs text-gray-600">{pharmacy.address}</p>
-                        <p className="text-xs text-medical-blue">{pharmacy.distance.toFixed(1)} km away</p>
-                        <div className="flex space-x-2 mt-2">
-                          <Button size="sm" className="text-xs px-2 py-1" data-testid={`button-directions-${index}`}>
-                            Directions
-                          </Button>
-                          <Button variant="outline" size="sm" className="text-xs px-2 py-1" data-testid={`button-call-${index}`}>
-                            Call
-                          </Button>
-                        </div>
+                    {p.latitude && p.longitude ? (
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-6 px-2"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleNavigation(p);
+                        }}
+                      >
+                        <Navigation size={14} className="mr-1" />
+                        <span className="text-xs">Navigate</span>
+                      </Button>
+                    ) : null}
+                  </div>
+
+                  <div className="space-y-1 text-xs text-medical-gray">
+                    {p.address && (
+                      <div className="flex items-center">
+                        <MapPin size={12} className="mr-2 flex-shrink-0" />
+                        {p.address}
+                      </div>
+                    )}
+                    {p.phoneNumber && (
+                      <div className="flex items-center">
+                        <Phone size={12} className="mr-2 flex-shrink-0" />
+                        {p.phoneNumber}
+                      </div>
+                    )}
+                    {p.openingHours && (
+                      <div className="flex items-center">
+                        <Clock size={12} className="mr-2 flex-shrink-0" />
+                        {p.openingHours}
                       </div>
                     )}
                   </div>
-                );
-              })}
 
-              {/* Map legend */}
-              <div className="absolute bottom-4 left-4 bg-white bg-opacity-90 rounded-lg p-3 text-xs">
-                <div className="space-y-1" data-testid="map-legend">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-medical-blue rounded-full"></div>
-                    <span>Pharmacy</span>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <div className="w-3 h-3 bg-red-500 rounded-full"></div>
-                    <span>Your Location</span>
-                  </div>
+                  {!!(p.matches && p.matches.length) && (
+                    <>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        {p.matches!.map((m, i) => (
+                          <Badge key={i} variant="secondary" className="text-xs bg-gray-900 text-white">
+                            {m.medicineName}
+                          </Badge>
+                        ))}
+                      </div>
+                      <div className="mt-2">{renderStatusSummary(p)}</div>
+                    </>
+                  )}
                 </div>
-              </div>
+              ))}
             </div>
-
-            {/* Pharmacy list */}
-            <div className="p-4 border-t">
-              <div className="space-y-3">
-                {pharmaciesWithDistance.slice(0, 3).map((pharmacy: any, index: number) => (
-                  <div
-                    key={pharmacy.id}
-                    className={`p-3 border rounded-lg cursor-pointer hover:bg-gray-50 transition-colors ${
-                      selectedPharmacy?.id === pharmacy.id ? 'border-medical-blue bg-blue-50' : ''
-                    }`}
-                    onClick={() => setSelectedPharmacy(pharmacy)}
-                    data-testid={`pharmacy-list-item-${index}`}
-                  >
-                    <div className="flex justify-between items-start">
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-sm">{pharmacy.name}</h4>
-                        <p className="text-xs text-gray-600 mt-1">{pharmacy.address}</p>
-                        <div className="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                          {pharmacy.phoneNumber && (
-                            <div className="flex items-center space-x-1">
-                              <Phone size={10} />
-                              <span>{pharmacy.phoneNumber}</span>
-                            </div>
-                          )}
-                          {pharmacy.openingHours && (
-                            <div className="flex items-center space-x-1">
-                              <Clock size={10} />
-                              <span>{pharmacy.openingHours}</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <Badge variant="outline" className="text-xs">
-                          {pharmacy.distance.toFixed(1)} km
-                        </Badge>
-                        <div className="mt-2 flex space-x-1">
-                          <Button size="sm" variant="outline" className="text-xs px-2 py-1" data-testid={`button-directions-list-${index}`}>
-                            <Navigation size={10} />
-                          </Button>
-                          {pharmacy.phoneNumber && (
-                            <Button size="sm" variant="outline" className="text-xs px-2 py-1" data-testid={`button-call-list-${index}`}>
-                              <Phone size={10} />
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
+          ) : (
+            <div className="text-center py-8 text-medical-gray">
+              <p className="text-sm">No pharmacies found for this location/filters.</p>
+              <p className="text-xs mt-2">Tap “Use my location” to search from your GPS.</p>
             </div>
-          </CardContent>
-        </Card>
-      )}
+          )}
 
-      <style>{`
-        .pulse-animation {
-          animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-          0% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
-          }
-          70% {
-            box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
-          }
-          100% {
-            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
-          }
-        }
-      `}</style>
+          {/* Map placeholder */}
+          {/* <div className="mt-4 bg-gray-100 rounded-lg h-48 flex items-center justify-center">
+            <div className="text-center">
+              <MapPin className="mx-auto mb-2" size={32} />
+              <p className="text-sm text-medical-gray">Interactive map view</p>
+              <p className="text-xs text-gray-500 mt-1">Click a pharmacy to see on map</p>
+            </div>
+          </div> */}
+        </CardContent>
+      </Card>
     </div>
   );
 }

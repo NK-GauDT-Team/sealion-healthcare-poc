@@ -31,11 +31,21 @@ import {
   Lock,
   UserCheck,
   AlertTriangle,
-  Stethoscope
+  Stethoscope,
+  Briefcase,
+  Plane,
 } from "lucide-react";
+import { useState } from "react";
 
 
 export default function Home() {
+  // State for User Journey #2 integration
+  const [journey2Medicines, setJourney2Medicines] = useState<any[]>([]);
+  const [journey2Location, setJourney2Location] = useState({ 
+    city: '', 
+    country: '' 
+  });
+
   const handleScrollToSection = (sectionId: string) => {
     const element = document.getElementById(sectionId);
     if (element) {
@@ -80,7 +90,7 @@ export default function Home() {
                 </span>
               </p>
               <div className="flex flex-col sm:flex-row gap-4">
-                <Link href="/demo">
+                <a href="#demo">
                   <Button 
                     className="bg-medical-blue hover:bg-medical-blue-dark text-white px-8 py-4 text-base font-semibold"
                     data-testid="button-start-chat"
@@ -88,12 +98,12 @@ export default function Home() {
                     <MessageCircle className="mr-3" size={20} />
                     Start Medical Chat
                   </Button>
-                </Link>
+                </a>
                 <Button 
                   variant="outline" 
                   className="border-medical-blue text-medical-blue hover:bg-medical-blue hover:text-white px-8 py-4 text-base font-semibold"
                   onClick={() => handleScrollToSection('demo')}
-                  data-testid="button-watch-demo"
+                  data-testid="#demo"
                 >
                   <Play className="mr-3" size={20} />
                   Watch Demo
@@ -204,6 +214,63 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Our Innovation Stack */}
+      <section id="innovation-stack" className="py-20 bg-medical-light">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-how-it-works-title">
+              Our Innovation Stack
+            </h2>
+            <p className="text-xl text-medical-gray max-w-3xl mx-auto" data-testid="text-how-it-works-description">
+              We are not a generic chatbot. We’re built from the ground up with cutting-edge AI architecture designed specifically for healthcare travelers.
+            </p>
+          </div>
+
+          <div className="grid lg:grid-cols-2 gap-12 items-center mb-16">
+            <div className="space-y-8">
+              <div className="flex items-start space-x-4" data-testid="GraphRAG">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">1</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">GraphRAG (Graph-based Retrieval-Augmented Generation)</h3>
+                  <p className="text-medical-gray">
+                    We don’t just search; we connect information like a medical knowledge graph. This means smarter, context-aware answers that link your symptoms, prescriptions, and local drug equivalents.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4" data-testid="MCP">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">2</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">MCP(Model Context Protocol)</h3>
+                  <p className="text-medical-gray">
+                    Our bot plugs into real-time local data through MCP integrations — from pharmacy databases to hospital APIs — giving you live, trusted recommendations beyond static AI text.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4" data-testid="searchengine">
+                <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">3</div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">Integrated Search Engine</h3>
+                  <p className="text-medical-gray">
+                    Instead of hallucinating, our engine cross-checks multiple verified health and pharmacy sources before suggesting guidance, ensuring higher reliability and safety.
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <img 
+                src="https://www.michiganstateuniversityonline.com/wp-content/uploads/sites/3/2020/10/What-is-healthcare-management.jpeg?w=750&h=375&crop=1" 
+                alt="Business use cases" 
+                className="rounded-xl shadow-lg w-full"
+                data-testid="business-use-cases"
+              />
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* How It Works */}
       <section id="how-it-works" className="py-20 bg-medical-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -270,6 +337,71 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Business Use Cases */}
+      <section id="business" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4" data-testid="text-features-title">
+              Business Use Cases
+            </h2>
+          </div>
+          
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* Travel Insurance Companies */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-ai">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Shield className="text-white text-xl" /> {/* Changed from Bot */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Travel Insurance Companies</h3>
+                <p className="text-medical-gray">
+                  Bundle the chatbot as a value-added service for policyholders abroad (reduced claims via preventive guidance).
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Airlines / Travel Agencies */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-language">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Plane className="text-white text-xl" /> {/* Changed from Languages */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Airlines / Travel Agencies</h3>
+                <p className="text-medical-gray">
+                  Offer the chatbot to premium customers as a travel wellness companion.
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Pharmacies & Healthcare Chains */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-medicine">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Stethoscope className="text-white text-xl" /> {/* Changed from Pill */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Pharmacies & Healthcare Chains</h3>
+                <p className="text-medical-gray">
+                  Use it as a digital triage & referral tool that funnels customers into local clinics.
+                </p>
+              </CardContent>
+            </Card>
+            
+            {/* Corporate Travel Programs */}
+            <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-location">
+              <CardContent className="p-6">
+                <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
+                  <Briefcase className="text-white text-xl" /> {/* Changed from MapPin */}
+                </div>
+                <h3 className="text-xl font-semibold text-gray-900 mb-3">Corporate Travel Programs</h3>
+                <p className="text-medical-gray">
+                  Provide to employees on overseas assignments for duty-of-care compliance.
+                </p>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
       {/* Live Demo Section */}
       <section id="demo" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -282,51 +414,59 @@ export default function Home() {
             </p>
           </div>
 
-          <Tabs defaultValue="chat" className="w-full">
+         <Tabs defaultValue="journey1" className="w-full">
             <TabsList className="grid w-full grid-cols-3 mb-8">
-              <TabsTrigger value="chat" className="text-base font-medium">
-                <MessageCircle className="mr-2 h-4 w-4" />
+             <TabsTrigger value="journey1" className="data-[state=active]:bg-medical-blue data-[state=active]:text-white">
+               <MapPin className="mr-2" size={16} />
                   User Journey #1
               </TabsTrigger>
-              <TabsTrigger value="pharmacy" className="text-base font-medium">
-                <MapPin className="mr-2 h-4 w-4" />
+             <TabsTrigger value="journey2" className="data-[state=active]:bg-medical-blue data-[state=active]:text-white">
+               <MapPin className="mr-2" size={16} />
                   User Journey #2
               </TabsTrigger>
-              <TabsTrigger value="combined" className="text-base font-medium">
-                <Bot className="mr-2 h-4 w-4" />
+             <TabsTrigger value="journey3" className="data-[state=active]:bg-medical-blue data-[state=active]:text-white">
+               <MapPin className="mr-2" size={16} />
                   User Journey #3
               </TabsTrigger>
             </TabsList>
             
-            <TabsContent value="chat" className="w-full">
-              <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
+           <TabsContent value="journey1" className="space-y-8">
+             <div className="grid lg:grid-cols-2 gap-8">
+               <div>
                   <ChatInterface />
                 </div>
-                <div>
-                  <PharmacyMap />
+               <div className="space-y-4">
+                 <PharmacyMap city="Bangkok" country="Thailand" />
                 </div>
               </div>
             </TabsContent>
             
-            <TabsContent value="pharmacy" className="w-full">
-              <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
-                  <ChatInterface2 />
-                </div>
+           {/* UPDATED USER JOURNEY #2 WITH INTEGRATION */}
+           <TabsContent value="journey2" className="space-y-8">
+             <div className="grid lg:grid-cols-2 gap-8">
                 <div>
-                  <PharmacyMap2 />
+                 <ChatInterface2 
+                   onMedicinesUpdate={setJourney2Medicines}
+                   onLocationUpdate={setJourney2Location}
+                 />
+               </div>
+               <div className="space-y-4">
+                 <PharmacyMap2 
+                   city={journey2Location.city} 
+                   country={journey2Location.country}
+                   medicines={journey2Medicines}
+                 />
                 </div>
               </div>
             </TabsContent>
             
-            <TabsContent value="combined" className="w-full">
-              <div className="grid lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2">
+           <TabsContent value="journey3" className="space-y-8">
+             <div className="grid lg:grid-cols-2 gap-8">
+               <div>
                   <ChatInterface3 />
                 </div>
-                <div>
-                  <PharmacyMap3 />
+               <div className="space-y-4">
+                 <PharmacyMap3 city="Manila" country="Philippines" />
                 </div>
               </div>
             </TabsContent>
@@ -413,11 +553,11 @@ export default function Home() {
                 AI-driven healthcare support for travelers who speaks in South Asian languages. Receive immediate health guidance, 
                 medicine recommendations, and local pharmacy locations wherever you are.
               </p>
-              <Link href="/demo">
+              <a href="#demo">
                 <Button className="bg-medical-blue hover:bg-medical-blue-dark" data-testid="button-footer-trial">
                   Start Free Trial
                 </Button>
-              </Link>
+              </a>
             </div>
             
             <div>
@@ -425,7 +565,7 @@ export default function Home() {
               <ul className="space-y-2 text-gray-400">
                 <li><a href="#features" className="hover:text-white transition-colors" data-testid="link-footer-features">Features</a></li>
                 <li><a href="#how-it-works" className="hover:text-white transition-colors" data-testid="link-footer-how-it-works">How It Works</a></li>
-                <li><Link href="/demo" className="hover:text-white transition-colors" data-testid="link-footer-demo">Demo</Link></li>
+                <li><a href="#demo" className="hover:text-white transition-colors" data-testid="link-footer-demo">Demo</a></li>
                 <li><a href="#" className="hover:text-white transition-colors" data-testid="link-footer-api">API</a></li>
               </ul>
             </div>
