@@ -49,8 +49,10 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
   }, [isTyping]);
 
   const callMedicalAPI = async (query: string) => {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5 * 60 * 1000); // 5 minutes
     try {
-      const response = await fetch('http://ec2-54-234-165-21.compute-1.amazonaws.com:5000/test_process/', {
+      const response = await fetch('http://ec2-54-234-165-21.compute-1.amazonaws.com:5000/process/', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -58,6 +60,7 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
         body: JSON.stringify({
           query: query
         }),
+        signal: controller.signal,
       });
 
       if (!response.ok) {
@@ -70,6 +73,8 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     } catch (error) {
       console.error('API call failed:', error);
       throw error;
+    } finally {
+      clearTimeout(timeoutId);
     }
   };
 
