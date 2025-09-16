@@ -14,6 +14,15 @@ type ProgressMsg = {
   message: string;
 };
 
+const getErrorMessage = (error: unknown): string => {
+  if (error instanceof Error) return error.message;
+  try {
+    return JSON.stringify(error);
+  } catch {
+    return String(error);
+  }
+};
+
 interface ChatMessage {
   id: string;
   type: 'user' | 'assistant';
@@ -48,6 +57,20 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
   const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [expandedMedicines, setExpandedMedicines] = useState<{[key: string]: boolean}>({});
   const [expandedMethods, setExpandedMethods] = useState<{[key: string]: boolean}>({});
+  const [userInputs, setUserInputs] = useState<string[]>(() => {
+    try {
+      const raw = sessionStorage.getItem('userInputs');
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    try {
+      sessionStorage.setItem('userInputs', JSON.stringify(userInputs));
+    } catch {}
+  }, [userInputs]);
 
   // Handle typing step rotation
   useEffect(() => {
@@ -163,6 +186,7 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
 
     setMessages(prev => [...prev, userMessage]);
     const currentQuery = inputMessage;
+    setUserInputs(prev => [...prev, currentQuery]);
     setInputMessage("");
     setIsTyping(true);
 
@@ -221,12 +245,13 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
       const errorMessage: ChatMessage = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: "I'm sorry, I'm having trouble connecting to the medical database right now. Please try again in a moment, or consult with a healthcare professional if your symptoms are severe.",
+        content: `I'm sorry, I'm having trouble connecting to the medical database right now. Please try again in a moment, or consult with a healthcare professional if your symptoms are severe.\n\nError details: ${getErrorMessage(error)}`,
         timestamp: new Date(),
         error: true
       };
       
       setMessages(prev => [...prev, errorMessage]);
+      try { console.error('Medical API error:', error); } catch {}
     } finally {
       setIsTyping(false);
     }
