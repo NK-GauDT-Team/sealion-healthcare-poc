@@ -21,67 +21,25 @@ interface PharmacyMapProps {
   country?: string;
   city?: string;
   className?: string;
+  medicines?: { name: string; explanation: string; [key: string]: any }[];
+}
+interface RecommendedMedicine {
+  name: string;
+  dosage?: string;
+  availability?: string;
+  description?: string;
 }
 const SCRIPTED_LOCATION = 'Jakarta'
 // Hardcoded scripted medicine changes
 const SCRIPTED_MEDICINES = [
-  {
-    step: 1,
-    medicines: [
-      {
-        name: "Tolak Angin",
-        dosage: "1 sachet • 3 times daily",
-        availability: "Available",
-        description: "Traditional herbal medicine for cold and flu symptoms"
-      },
-      {
-        name: "Antangin",
-        dosage: "1 tablet • 3 times daily",
-        availability: "Available",
-        description: "Herbal supplement for digestive and respiratory health"
-      }
-    ]
-  },
-  {
-    step: 2,
-    medicines: [
-      {
-        name: "Freshcare Roll on",
-        dosage: "Apply as needed",
-        availability: "Available",
-        description: "Topical pain relief and aromatherapy"
-      },
-      {
-        name: "Wedang Jahe",
-        dosage: "1 sachet • Mix with hot water",
-        availability: "Available",
-        description: "Instant ginger drink for warming and digestive health"
-      }
-    ]
-  },
-  {
-    step: 3,
-    medicines: [
-      {
-        name: "Paracetamol 500mg",
-        dosage: "1-2 tablets • Max 4 times daily",
-        availability: "Available",
-        description: "Pain reliever and fever reducer"
-      },
-      {
-        name: "Panadol",
-        dosage: "1-2 tablets • Every 4-6 hours",
-        availability: "Available",
-        description: "Paracetamol-based pain and fever relief"
-      }
-    ]
-  }
+  {}
 ];
 
-export default function PharmacyMap({ country = "Thailand", city = "Bangkok", className = "" }: PharmacyMapProps) {
+export default function PharmacyMap({ country = "Thailand", city = "Bangkok", className = "", medicines = [] }: PharmacyMapProps) {
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [medicineStep, setMedicineStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showAllMedicines, setShowAllMedicines] = useState(false);
 
   // Handle keydown events to trigger medicine changes
   useEffect(() => {
@@ -164,10 +122,24 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
       })).sort((a: any, b: any) => a.distance - b.distance)
     : [];
 
-  // Get current medicines to display
-  const currentMedicines = medicineStep > 0 && medicineStep <= SCRIPTED_MEDICINES.length 
-    ? SCRIPTED_MEDICINES[medicineStep - 1].medicines 
+  // Prefer shared medicines from chat, otherwise fall back to scripted demo
+  const sharedMedicines = Array.isArray(medicines) && medicines.length > 0
+    ? medicines.map((m: any) => ({
+        name: m?.name || '',
+        dosage: m?.dosage || '',
+        availability: m?.availability || 'Available',
+        description: m?.explanation || '',
+      }))
     : [];
+
+  // Get current medicines to display
+  const currentMedicines: RecommendedMedicine[] = sharedMedicines.length > 0
+    ? (sharedMedicines as unknown as RecommendedMedicine[])
+    : (medicineStep > 0 && medicineStep <= (SCRIPTED_MEDICINES as any).length 
+      ? (((SCRIPTED_MEDICINES as any)[medicineStep - 1]?.medicines as RecommendedMedicine[]) ?? [])
+      : []);
+
+  const visibleMedicines = showAllMedicines ? currentMedicines : currentMedicines.slice(0, 2);
 
   if (isLoading) {
     return (
@@ -202,24 +174,25 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
         </CardHeader>
         <CardContent>
           <div className={`space-y-3 transition-opacity duration-500 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-            {currentMedicines.map((medicine, index) => (
+            {visibleMedicines.map((medicine: RecommendedMedicine, index: number) => {
+              const availability = medicine.availability ?? 'Available';
+              return (
               <div key={`${medicineStep}-${index}`} className="border border-gray-200 rounded-lg p-3" data-testid={`medicine-card-${index}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-sm">{medicine.name}</span>
                   <Badge 
                     className={`text-white ${
-                      medicine.availability === 'Available' 
+                      availability === 'Available' 
                         ? 'bg-medical-success' 
-                        : medicine.availability === 'Prescription' 
+                        : availability === 'Prescription' 
                           ? 'bg-medical-warning' 
                           : 'bg-medical-blue'
                     }`} 
-                    data-testid={`badge-${medicine.availability.toLowerCase()}`}
+                    data-testid={`badge-${availability.toLowerCase()}`}
                   >
-                    {medicine.availability}
+                    {availability}
                   </Badge>
                 </div>
-                <p className="text-xs text-medical-gray">{medicine.dosage}</p>
                 <p className="text-xs text-medical-gray">{medicine.description}</p>
                 {/* <p className="text-xs text-medical-blue mt-1">
                   {medicineStep > 0 
@@ -228,7 +201,20 @@ export default function PharmacyMap({ country = "Thailand", city = "Bangkok", cl
                   }
                 </p> */}
               </div>
-            ))}
+            );})}
+            {currentMedicines.length > 2 && (
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setShowAllMedicines((v) => !v)}
+                  data-testid="button-toggle-medicines"
+                >
+                  {showAllMedicines ? 'Show Less' : 'Show All'}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Instruction for initial state */}

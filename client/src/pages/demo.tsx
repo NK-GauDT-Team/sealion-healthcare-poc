@@ -1,11 +1,13 @@
 import Navigation from "@/components/navigation";
 import ChatInterface from "@/components/chat-interface";
 import PharmacyMap from "@/components/pharmacy-map";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageCircle, MapPin, Pill, Activity } from "lucide-react";
 
 export default function Demo() {
+  const [demoMedicines, setDemoMedicines] = useState<any[]>([]);
   return (
     <div className="min-h-screen bg-white">
       <Navigation />
@@ -42,14 +44,14 @@ export default function Demo() {
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-0">
-                  <ChatInterface />
+                  <ChatInterface onMedicinesUpdate={setDemoMedicines} />
                 </CardContent>
               </Card>
             </div>
 
             {/* Pharmacy Map and Medicine Info */}
             <div>
-              <PharmacyMap country="Thailand" city="Bangkok" />
+              <PharmacyMap country="Thailand" city="Bangkok" medicines={demoMedicines} />
             </div>
           </div>
 

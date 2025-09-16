@@ -82,6 +82,7 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
   const [selectedPharmacy, setSelectedPharmacy] = useState<Pharmacy | null>(null);
   const [medicineStep, setMedicineStep] = useState(0);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  const [showAllMedicines, setShowAllMedicines] = useState(false);
 
   // Handle keydown events to trigger medicine changes
   useEffect(() => {
@@ -180,6 +181,7 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
   const currentMedicines = medicineStep > 0 && medicineStep <= SCRIPTED_MEDICINES.length 
     ? SCRIPTED_MEDICINES[medicineStep - 1].medicines 
     : [];
+  const visibleMedicines = showAllMedicines ? currentMedicines : currentMedicines.slice(0, 2);
 
   if (isLoading) {
     return (
@@ -214,7 +216,7 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
         </CardHeader>
         <CardContent>
           <div className={`space-y-3 transition-opacity duration-500 ${isTransitioning ? 'opacity-50' : 'opacity-100'}`}>
-            {currentMedicines.map((medicine, index) => (
+            {visibleMedicines.map((medicine, index) => (
               <div key={`${medicineStep}-${index}`} className="border border-gray-200 rounded-lg p-3" data-testid={`medicine-card-${index}`}>
                 <div className="flex items-center justify-between mb-2">
                   <span className="font-medium text-sm">{medicine.name}</span>
@@ -231,7 +233,6 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
                     {medicine.availability}
                   </Badge>
                 </div>
-                <p className="text-xs text-medical-gray">{medicine.dosage}</p>
                 <p className="text-xs text-medical-gray">{medicine.description}</p>
                 {/* <p className="text-xs text-medical-blue mt-1">
                   {medicineStep > 0 
@@ -241,6 +242,19 @@ export default function PharmacyMap({ country = "Thailand", city = SCRIPTED_LOCA
                 </p> */}
               </div>
             ))}
+            {currentMedicines.length > 2 && (
+              <div className="text-center">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="text-xs"
+                  onClick={() => setShowAllMedicines((v) => !v)}
+                  data-testid="button-toggle-medicines"
+                >
+                  {showAllMedicines ? 'Show Less' : 'Show All'}
+                </Button>
+              </div>
+            )}
           </div>
 
           {/* Instruction for initial state */}

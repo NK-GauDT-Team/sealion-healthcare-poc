@@ -3,7 +3,16 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Bot, Shield, Clock, AlertTriangle } from "lucide-react";
+import { Loader2, Send, Bot, Shield, Clock, AlertTriangle, Check } from "lucide-react";
+import { EventSource } from "eventsource";
+type EventSourceMessageEvent = { data: string };
+
+type ProgressMsg = {
+  step: number;
+  total: number;
+  percent: number;
+  message: string;
+};
 
 interface ChatMessage {
   id: string;
@@ -18,9 +27,10 @@ interface ChatMessage {
 
 interface ChatInterfaceProps {
   initialMessages?: ChatMessage[];
+  onMedicinesUpdate?: (medicines: { name: string; explanation: string; [key: string]: any }[]) => void;
 }
 
-export default function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
+export default function ChatInterface({ initialMessages = [], onMedicinesUpdate }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -33,6 +43,9 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
   const [typingStep, setTypingStep] = useState(0);
+  const [progressSteps, setProgressSteps] = useState<string[]>([]);
+  const [progressStartAt, setProgressStartAt] = useState<number | null>(null);
+  const [elapsedMs, setElapsedMs] = useState<number>(0);
   const [expandedMedicines, setExpandedMedicines] = useState<{[key: string]: boolean}>({});
   const [expandedMethods, setExpandedMethods] = useState<{[key: string]: boolean}>({});
 
@@ -48,31 +61,96 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     }
   }, [isTyping]);
 
-  const callMedicalAPI = async (query: string) => {
-    try {
-      const response = await fetch('http://ec2-54-234-165-21.compute-1.amazonaws.com:5000/test_process/', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          query: query
-        }),
-      });
+  // Elapsed time ticker once progress has started
+  useEffect(() => {
+    if (!isTyping || progressStartAt == null) return;
+    const t = setInterval(() => {
+      setElapsedMs(Date.now() - progressStartAt);
+    }, 500);
+    return () => clearInterval(t);
+  }, [isTyping, progressStartAt]);
 
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-      
-      const data = await response.json();
-      console.log('API Response:', data);
-      return data.result;
-    } catch (error) {
-      console.error('API call failed:', error);
-      throw error;
-    }
+  const formatElapsed = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
   };
 
+  const callMedicalAPI = async (query: string) => {
+    return new Promise<any>((resolve, reject) => {
+      try {
+        // const backend = "http://ec2-54-234-165-21.compute-1.amazonaws.com:5000";
+        const backend = "http://localhost:5002"
+        const es = new EventSource(`${backend}/stream?query=${query}`, { withCredentials: false });
+        es.onopen = () => console.log('SSE open, readyState=', es.readyState)
+
+        es.addEventListener("status", (ev: EventSourceMessageEvent) => {
+          try {
+            console.log("status:", ev.data);
+            if (progressStartAt == null) {
+              setProgressStartAt(Date.now());
+              setElapsedMs(0);
+            }
+          } catch {}
+        });
+
+        es.addEventListener("progress", (ev: EventSourceMessageEvent) => {
+          try {
+            const payload = JSON.parse(ev.data as string) as { step?: number | string; message?: string; data?: any };
+            console.log(payload)
+            if (progressStartAt == null) {
+              setProgressStartAt(Date.now());
+              setElapsedMs(0);
+            }
+            const message = payload.message ?? '';
+
+            setProgressSteps((prev) => {
+              if (!message) return prev;
+              if (prev.length === 0) return [message];
+              if (prev[prev.length - 1] !== message) return [...prev, message];
+              return prev;
+            });
+          } catch (e) {
+            // ignore parsing issues during testing
+          }
+        });
+
+        const handleCompleted = (ev: EventSourceMessageEvent) => {
+          try { es.close(); } catch {}
+          // finalize elapsed
+          if (progressStartAt != null) {
+            setElapsedMs(Date.now() - progressStartAt);
+          }
+          setProgressSteps((prev) => (prev.length && prev[prev.length - 1] === "Completed" ? prev : [...prev, "Completed"]));
+          try {
+            const payload = JSON.parse(ev.data as string) as { step?: number; message?: string; data?: any };
+            console.log(payload)
+            const resultData = payload?.data ?? {};
+            try { localStorage.setItem('lastMedicalApiResponse', JSON.stringify(resultData)); } catch {}
+            resolve(resultData.result);
+          } catch (e) {
+            // If parsing fails, resolve with an empty structure
+            resolve({ result: { ok: true } });
+          }
+        };
+
+        es.addEventListener("completed", (ev: EventSourceMessageEvent) => handleCompleted(ev));
+        // es.addEventListener("complete", (ev: EventSourceMessageEvent) => handleCompleted(ev));
+
+        es.onerror = (e: Event) => {
+          try {
+            es.close();
+          } catch {}
+          reject(e);
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  
   const handleSendMessage = async () => {
     if (!inputMessage.trim()) return;
 
@@ -121,6 +199,23 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
       };
       
       setMessages(prev => [...prev, assistantMessage]);
+
+      // Share medicines with parent if requested
+      try {
+        if (onMedicinesUpdate) {
+          const normalized = (apiResponse.medicine_details || []).map((m: any) => ({
+            name: m?.name || m?.medicine_name || '',
+            explanation: m?.explanation || m?.medicine_instruction || m?.description || '',
+            dosage: m?.dosage,
+            availability: m?.availability,
+            source: 'chat-api',
+            original: m,
+          }));
+          onMedicinesUpdate(normalized);
+        }
+      } catch (err) {
+        // no-op for parent sharing
+      }
     } catch (error) {
       // Handle API error
       const errorMessage: ChatMessage = {
@@ -340,18 +435,14 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
               <Bot size={16} />
             </div>
-            <div className="bg-gray-50 rounded-lg p-4 max-w-sm border border-gray-200">
+            <div className="bg-gray-50 rounded-lg p-4 max-w-md border border-gray-200">
               <div className="flex items-center space-x-3 text-sm text-gray-600">
                 <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
                 <span data-testid="typing-indicator" className="animate-pulse">
-                  {(() => {
-                    const steps = [
-                      "Analyzing your symptoms...",
-                      "Searching for traditional medicines...",
-                      "Preparing recommendations..."
-                    ];
-                    return steps[typingStep];
-                  })()}
+                  {progressSteps.length > 0 ? progressSteps[progressSteps.length - 1] : "Working..."}
+                </span>
+                <span className="text-xs text-gray-500 ml-auto">
+                  {formatElapsed(elapsedMs)}
                 </span>
               </div>
             </div>
@@ -366,7 +457,8 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             <Input
               type="text"
               placeholder="Describe your symptoms and location (e.g., 'I'm Kevin from Jakarta, currently in Vietnam, and I have a cough with phlegm...')"
-              value={inputMessage}
+              // value={inputMessage}
+              value = "Saya Shem dari Jakarta, saya sedang sakit kembung dan berada di Vietnam. Tolong rekomendasi obat untuk d minum"
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
