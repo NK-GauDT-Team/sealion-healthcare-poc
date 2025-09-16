@@ -147,20 +147,7 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
       } catch (error) {
         reject(error);
       }
-<<<<<<< HEAD
     });
-=======
-      
-      const data = await response.json();
-      console.log('API Response:', data);
-      return data.result;
-    } catch (error) {
-      console.error('API call failed:', error);
-      throw error;
-    } finally {
-      clearTimeout(timeoutId);
-    }
->>>>>>> main
   };
 
   
