@@ -63,6 +63,7 @@ export default function PharmacyMap2({
   country = "Vietnam",
   className = "",
   medicines = [],
+
   //websocketUrl = "https://allocation-burner-ky-surgery.trycloudflare.com",
   websocketUrl = "ws://localhost:8765",
 }: PharmacyMapProps) {
@@ -74,6 +75,7 @@ export default function PharmacyMap2({
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
   const [center, setCenter] = useState<{ lat: number; lon: number } | null>(null);
+  const [showAllMedicines, setShowAllMedicines] = useState(false);
 
   // NEW: travel mode state
   const [mode, setMode] = useState<TravelMode>("walking");
@@ -342,13 +344,12 @@ export default function PharmacyMap2({
         <CardContent>
           {medicines?.length ? (
             <div className="space-y-3">
-              {medicines.map((m, i) => (
+              {(showAllMedicines ? medicines : medicines.slice(0, 2)).map((m, i) => (
                 <div key={i} className="bg-medical-light p-3 rounded-lg">
                   <div className="flex items-start justify-between">
                     <div className="pr-3">
                       <h4 className="font-semibold text-sm">{m.name}</h4>
                       {m.description && <p className="text-xs text-medical-gray mt-1">{m.description}</p>}
-                      {m.dosage && <p className="text-xs text-medical-blue mt-1">{m.dosage}</p>}
                     </div>
                     {m.localAvailability && (
                       <Badge className="text-xs bg-green-100 text-green-800 self-start">{m.localAvailability}</Badge>
@@ -356,6 +357,19 @@ export default function PharmacyMap2({
                   </div>
                 </div>
               ))}
+              {medicines.length > 2 && (
+                <div className="text-center">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="text-xs"
+                    onClick={() => setShowAllMedicines((v) => !v)}
+                    data-testid="button-toggle-medicines"
+                  >
+                    {showAllMedicines ? 'Show Less' : 'Show All'}
+                  </Button>
+                </div>
+              )}
             </div>
           ) : (
             <div className="text-center py-8 text-medical-gray">

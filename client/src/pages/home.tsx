@@ -38,8 +38,40 @@ import {
 import { useState } from "react";
 
 
+const MedicineList = ({ medicines = [] as Array<{ name: string; description?: string }> }) => {
+  const [showAll, setShowAll] = useState(false);
+  if (!Array.isArray(medicines) || medicines.length === 0) return null;
+  const visible = showAll ? medicines : medicines.slice(0, 2);
+  return (
+    <div className="space-y-3">
+      {visible.map((m, i) => (
+        <div key={i} className="border border-gray-200 rounded-lg p-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="font-medium text-sm">{m.name}</span>
+          </div>
+          {m.description && <p className="text-xs text-medical-gray">{m.description}</p>}
+        </div>
+      ))}
+      {medicines.length > 2 && (
+        <div className="text-center">
+          <Button
+            variant="outline"
+            size="sm"
+            className="text-xs"
+            onClick={() => setShowAll((v) => !v)}
+            data-testid="button-toggle-medicines-list"
+          >
+            {showAll ? 'Show Less' : 'Show All'}
+          </Button>
+        </div>
+      )}
+    </div>
+  );
+};
+
 export default function Home() {
   // State for User Journey #2 integration
+  const [journey1Medicines, setJourney1Medicines] = useState<any[]>([]);
   const [journey2Medicines, setJourney2Medicines] = useState<any[]>([]);
   const [journey2Location, setJourney2Location] = useState({ 
     city: '', 
@@ -83,7 +115,7 @@ export default function Home() {
                     SEALION-LLM
                     <img 
                       src={SEALIONPHOTO} 
-                      alt="SEALION LLM" 
+                      alt="SEALION LLM"
                       style={{ height: "45px", marginLeft: "8px", display: "inline-block", verticalAlign: "middle" }} 
                     />
                   </a>
@@ -433,10 +465,12 @@ export default function Home() {
            <TabsContent value="journey1" className="space-y-8">
              <div className="grid lg:grid-cols-2 gap-8">
                <div>
-                  <ChatInterface />
+                 <ChatInterface onMedicinesUpdate={setJourney1Medicines} />
                 </div>
                <div className="space-y-4">
-                 <PharmacyMap city="Bangkok" country="Thailand" />
+                 {/* Show top 2 medicines and a Show All button */}
+                 {/* <MedicineList medicines={journey1Medicines} /> */}
+                 <PharmacyMap city="Bangkok" country="Thailand" medicines={journey1Medicines} />
                 </div>
               </div>
             </TabsContent>
@@ -451,8 +485,10 @@ export default function Home() {
                  />
                </div>
                <div className="space-y-4">
+                 {/* Show top 2 medicines and a Show All button */}
+                 {/* <MedicineList medicines={journey2Medicines} /> */}
                  <PharmacyMap2 
-                   city={journey2Location.city} 
+                  //  city={journey2Location.city} 
                    country={journey2Location.country}
                    medicines={journey2Medicines}
                  />
