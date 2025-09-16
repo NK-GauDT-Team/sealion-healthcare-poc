@@ -80,7 +80,7 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
   const callMedicalAPI = async (query: string) => {
     return new Promise<any>((resolve, reject) => {
       try {
-        const backend = "http://ec2-54-234-165-d 21.compute-1.amazonaws.com:5000";
+        const backend = "http://ec2-54-234-165-21.compute-1.amazonaws.com:5000";
         // const backend = "http://localhost:5002"
         const es = new EventSource(`${backend}/stream?query=${query}`, { withCredentials: false });
         es.onopen = () => console.log('SSE open, readyState=', es.readyState)
@@ -147,7 +147,20 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
       } catch (error) {
         reject(error);
       }
+<<<<<<< HEAD
     });
+=======
+      
+      const data = await response.json();
+      console.log('API Response:', data);
+      return data.result;
+    } catch (error) {
+      console.error('API call failed:', error);
+      throw error;
+    } finally {
+      clearTimeout(timeoutId);
+    }
+>>>>>>> main
   };
 
   
