@@ -80,7 +80,7 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
   const callMedicalAPI = async (query: string) => {
     return new Promise<any>((resolve, reject) => {
       try {
-        const backend = "http://ec2-54-234-165-21.compute-1.amazonaws.com:5000";
+        const backend = "http://api.sealionmcp.com";
         // const backend = "http://localhost:5002"
         const es = new EventSource(`${backend}/stream?query=${query}`, { withCredentials: false });
         es.onopen = () => console.log('SSE open, readyState=', es.readyState)
@@ -457,8 +457,8 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
             <Input
               type="text"
               placeholder="Describe your symptoms and location (e.g., 'I'm Kevin from Jakarta, currently in Vietnam, and I have a cough with phlegm...')"
-              // value={inputMessage}
-              value = "Saya Shem dari Jakarta, saya sedang sakit kembung dan berada di Vietnam. Tolong rekomendasi obat untuk d minum"
+              value={inputMessage}
+              // value = "Saya Shem dari Jakarta, saya sedang sakit kembung dan berada di Vietnam. Tolong rekomendasi obat untuk d minum"
               onChange={(e) => setInputMessage(e.target.value)}
               onKeyPress={handleKeyPress}
               className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
