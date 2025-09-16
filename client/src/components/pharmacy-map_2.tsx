@@ -57,11 +57,15 @@ interface PharmacyMapProps {
   websocketUrl?: string;
 }
 
+type TravelMode = "walking" | "driving";
+
 export default function PharmacyMap2({
   country = "Vietnam",
   className = "",
   medicines = [],
-  websocketUrl = "wss://3.95.212.252:8765",
+
+  //websocketUrl = "https://allocation-burner-ky-surgery.trycloudflare.com",
+  websocketUrl = "ws://localhost:8765",
 }: PharmacyMapProps) {
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
   const [loading, setLoading] = useState(false);
@@ -72,6 +76,9 @@ export default function PharmacyMap2({
   const [connectionStatus, setConnectionStatus] = useState("Connecting...");
   const [center, setCenter] = useState<{ lat: number; lon: number } | null>(null);
   const [showAllMedicines, setShowAllMedicines] = useState(false);
+
+  // NEW: travel mode state
+  const [mode, setMode] = useState<TravelMode>("walking");
 
   const wsRef = useRef<WebSocket | null>(null);
   const reconnectRef = useRef<NodeJS.Timeout | null>(null);
@@ -158,15 +165,16 @@ export default function PharmacyMap2({
     () => ({
       radius_km: 2,
       limit: 4,
+      mode, // NEW
       medicines: (medicines || []).map((m) => ({
         name: m?.name ?? "",
         dosage: m?.dosage ?? "",
       })),
     }),
-    [medicines]
+    [medicines, mode]
   );
 
-  // Auto-search when medicines change AND we have a fresh GPS (≤60s old)
+  // Auto-search when medicines or mode change AND we have a fresh GPS (≤60s old)
   useEffect(() => {
     if (!isConnected) return;
     if (!(requestPayload.medicines?.length > 0)) return;
@@ -287,14 +295,14 @@ export default function PharmacyMap2({
     }
   };
 
-  // Open Google Maps (walking) — origin forced if available
+  // Open Google Maps — origin forced if available; mode from dropdown
   const handleNavigation = (p: Pharmacy) => {
     if (!p.latitude || !p.longitude) return;
     const origin = center || gpsRef.current;
     const dest = `${p.latitude},${p.longitude}`;
     const url = origin
-      ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=walking&dir_action=navigate`
-      : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=walking&dir_action=navigate`;
+      ? `https://www.google.com/maps/dir/?api=1&origin=${origin.lat},${origin.lon}&destination=${dest}&travelmode=${mode}&dir_action=navigate`
+      : `https://www.google.com/maps/dir/?api=1&destination=${dest}&travelmode=${mode}&dir_action=navigate`;
     window.open(url, "_blank");
   };
 
@@ -382,13 +390,27 @@ export default function PharmacyMap2({
         </CardHeader>
 
         <CardContent>
-          {/* GPS-only controls */}
+          {/* Controls */}
           <div className="flex flex-col md:flex-row md:items-center gap-2 mb-4">
             <div className="flex-1 flex items-center gap-2">
               <Button variant="outline" onClick={handleUseMyLocation} disabled={!isConnected || loading}>
                 <Crosshair size={16} className="mr-1" />
                 Use my location
               </Button>
+
+              <div className="flex items-center gap-2">
+                <label htmlFor="travel-mode" className="text-sm text-medical-gray">Mode</label>
+                <select
+                  id="travel-mode"
+                  className="border rounded-md px-2 py-1 text-sm"
+                  value={mode}
+                  onChange={(e) => setMode((e.target.value as TravelMode) || "walking")}
+                  disabled={loading}
+                >
+                  <option value="walking">Walking</option>
+                  <option value="driving">Driving</option>
+                </select>
+              </div>
             </div>
 
             <label className="flex items-center gap-2 text-sm text-medical-gray">

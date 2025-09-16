@@ -122,7 +122,9 @@ interface ChatInterface2Props {
 
 export default function ChatInterface2({
   initialMessages = [],
+  //websocketUrl = "https://allocation-burner-ky-surgery.trycloudflare.com",
   websocketUrl = "wss://3.95.212.252:8765",
+
   onMedicinesUpdate,
   onLocationUpdate,
 }: ChatInterface2Props) {
@@ -201,9 +203,14 @@ export default function ChatInterface2({
 
             if (isResponseLike) {
               let parsedFromMessage: any | null = null;
-              if (typeof data.message === "string" && data.message.trim().startsWith("{")) {
-                try { parsedFromMessage = JSON.parse(data.message); } catch {}
+              if (typeof data.message === "string") {
+                try {
+                  // Remove ```json or ``` wrappers if present
+                  const clean = data.message.replace(/```(?:json)?/gi, "").replace(/```/g, "").trim();
+                  parsedFromMessage = JSON.parse(clean);
+                } catch {}
               }
+
 
               // Text to display in the bubble
               const analysisText =
@@ -214,7 +221,9 @@ export default function ChatInterface2({
                 "";
 
               const displayMessage: string =
-                (typeof data.message === "string" && data.message) || analysisText || "Analysis complete.";
+                  (parsedFromMessage && (analysisText || "Analysis complete.")) ||
+                  (typeof data.message === "string" && data.message) ||
+                  "Analysis complete.";
 
               // severity
               const severityRaw =
