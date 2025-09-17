@@ -73,6 +73,7 @@ export default function Home() {
   // State for User Journey #2 integration
   const [journey1Medicines, setJourney1Medicines] = useState<any[]>([]);
   const [journey2Medicines, setJourney2Medicines] = useState<any[]>([]);
+  const [journey3Medicines, setJourney3Medicines] = useState<any[]>([]);
   const [journey2Location, setJourney2Location] = useState({ 
     city: '', 
     country: '' 
@@ -379,11 +380,10 @@ export default function Home() {
           </div>
           
           <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {/* Travel Insurance Companies */}
             <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-ai">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                  <Shield className="text-white text-xl" /> {/* Changed from Bot */}
+                  <Shield className="text-white text-xl" /> 
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Travel Insurance Companies</h3>
                 <p className="text-medical-gray">
@@ -392,11 +392,11 @@ export default function Home() {
               </CardContent>
             </Card>
             
-            {/* Airlines / Travel Agencies */}
+
             <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-language">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                  <Plane className="text-white text-xl" /> {/* Changed from Languages */}
+                  <Plane className="text-white text-xl" /> 
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Airlines / Travel Agencies</h3>
                 <p className="text-medical-gray">
@@ -409,7 +409,7 @@ export default function Home() {
             <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-medicine">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                  <Stethoscope className="text-white text-xl" /> {/* Changed from Pill */}
+                  <Stethoscope className="text-white text-xl" /> 
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Pharmacies & Healthcare Chains</h3>
                 <p className="text-medical-gray">
@@ -468,14 +468,11 @@ export default function Home() {
                  <ChatInterface onMedicinesUpdate={setJourney1Medicines} />
                 </div>
                <div className="space-y-4">
-                 {/* Show top 2 medicines and a Show All button */}
-                 {/* <MedicineList medicines={journey1Medicines} /> */}
-                 <PharmacyMap city="Bangkok" country="Thailand" medicines={journey1Medicines} />
+                 <PharmacyMap city="" country="" medicines={journey1Medicines} />
                 </div>
               </div>
             </TabsContent>
             
-           {/* UPDATED USER JOURNEY #2 WITH INTEGRATION */}
            <TabsContent value="journey2" className="space-y-8">
              <div className="grid lg:grid-cols-2 gap-8">
                 <div>
@@ -496,13 +493,13 @@ export default function Home() {
               </div>
             </TabsContent>
             
-           <TabsContent value="journey3" className="space-y-8">
-             <div className="grid lg:grid-cols-2 gap-8">
-               <div>
-                  <ChatInterface3 />
+            <TabsContent value="journey3" className="space-y-8">
+              <div className="grid lg:grid-cols-2 gap-8">
+                <div>
+                  <ChatInterface3 onMedicinesUpdate={setJourney3Medicines} />
                 </div>
-               <div className="space-y-4">
-                 <PharmacyMap3 city="Manila" country="Philippines" />
+                <div className="space-y-4">
+                  <PharmacyMap3 country="" medicines={journey3Medicines} />
                 </div>
               </div>
             </TabsContent>
