@@ -1,174 +1,376 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Send, Bot, Shield, Clock } from "lucide-react";
+import { Loader2, Send, Bot, Shield, Clock, AlertTriangle, Wifi, WifiOff } from "lucide-react";
+
+// Types
+interface EventSourceMessageEvent {
+  data: string;
+}
+
+interface MedicineRecommendation {
+  name?: string;
+  medicine_name?: string;
+  dosage?: string;
+  description?: string;
+  medicine_instruction?: string;
+  explanation?: string;
+  localAvailability?: string;
+  availability?: string;
+  source?: 'sealion' | 'graphrag';
+}
+
+interface NonPharmacologicMethod {
+  method_name?: string;
+  instructions?: string;
+  frequency?: string;
+  duration?: string;
+  notes?: string;
+}
+
+interface Analysis {
+  severity: "low" | "medium" | "high";
+  analysis: string;
+  seekEmergencyCare: boolean;
+}
 
 interface ChatMessage {
   id: string;
-  type: 'user' | 'assistant';
+  type: 'user' | 'assistant' | 'system';
   content: string;
   timestamp: Date;
-  medicines?: any[];
-  analysis?: any;
+  medicines?: MedicineRecommendation[];
+  nonPharmacologic?: NonPharmacologicMethod[];
+  analysis?: Analysis;
+  source?: 'sealion' | 'graphrag' | 'combined';
+  error?: boolean;
 }
 
-interface ChatInterfaceProps {
+interface ChatInterface3Props {
   initialMessages?: ChatMessage[];
+  websocketUrl?: string;
+  onMedicinesUpdate?: (medicines: Array<{ name: string; dosage?: string; description?: string; localAvailability?: string; source?: 'sealion' | 'graphrag' }>) => void;
 }
 
-// ######################################### THE HARDCODED SCRIPT STARTED HERE ###################################################################
-const SCRIPTED_CONVERSATION = [
-  {
-    // First script of discussion between User and System
-    userMessage: "Tên tôi là Jonathan, tôi đến từ Vietnam và hiện đang thăm Manila, Philippines. Tôi bị đau họng rất nặng, xin vui lòng giới thiệu thuốc cho tôi.",
-    systemResponse: "Đang truy vấn cơ sở dữ liệu dược phẩm GraphRAG và tìm kiếm cơ sở kiến thức về phương thuốc địa phương từ các trang web đáng tin cậy...\
-                          Phân tích 3.156 hồ sơ điều trị cho các triệu chứng viêm họng.\
-                          GraphRAG đã xác định cả thuốc lâm sàng và các phương thuốc truyền thống Philippines có sẵn ở Manila.\
-                          Kết hợp y học dựa trên bằng chứng với các lựa chọn điều trị địa phương.",
-    medicines: [
-      {
-        name: "Viên ngậm Strepsils",
-        description: "Viên ngậm sát trùng chứa amylmetacresol và dichlorobenzyl alcohol. Điểm hiệu quả GraphRAG: 85% cho nhiễm trùng họng do vi khuẩn.",
-        dosage: "Ngậm từ từ 1 viên trong miệng mỗi 2-3 giờ, tối đa 12 viên mỗi ngày"
-      },
-      {
-        name: "Siro Lagundi (Vitex negundo)",
-        description: "Thuốc thảo dược Philippines được Bộ Y tế chính thức phê duyệt để điều trị ho và đau họng. Có tính chất chống viêm tự nhiên.",
-        dosage: "Uống 5-10ml ba lần mỗi ngày sau bữa ăn"
-      }
-    ],
-    analysis: {
-      severity: "thấp",
-      analysis: "Phân tích GraphRAG và nguồn trang web đáng tin cậy chỉ ra mô hình viêm họng do virus. Khuyến nghị phương pháp kết hợp sử dụng viên ngậm sát trùng và thảo dược chống viêm.",
-      seekEmergencyCare: false
-    }
-  },
-  {
-    // Second script of discussion between User and System
-    userMessage: "Cơn đau họng đang trở nên tệ hơn khi tôi nuốt và tôi bắt đầu bị sốt",
-    systemResponse: "GraphRAG kích hoạt tìm kiếm sâu dựa trên diễn biến triệu chứng với các tìm kiếm nguồn đáng tin cậy bổ sung...\
-                        Tham chiếu chéo 892 trường hợp với sự kết hợp khó nuốt và sốt.\
-                        Khuyến nghị thuốc theo toa mạnh hơn với quản lý sốt truyền thống.",
-    medicines: [
-      {
-        name: "Amoxicillin 500mg",
-        description: "Kháng sinh phổ rộng cho nhiễm trùng họng do vi khuẩn. GraphRAG chỉ ra xác suất 78% mắc viêm họng liên cầu khuẩn.",
-        usage: "Uống 1 viên nang mỗi 8 giờ trong 7 ngày cùng với thức ăn"
-      },
-      {
-        name: "Trà Sambong (Blumea balsamifera)",
-        description: "Trà thuốc truyền thống Philippines có đặc tính hạ sốt. Được Bộ Y tế phê duyệt để giảm sốt và chống viêm.",
-        dosage: "Pha 1 túi trà trong nước nóng, uống 3-4 lần mỗi ngày"
-      }
-    ],
-    analysis: {
-      severity: "trung bình",
-      analysis: "Mô hình GraphRAG gợi ý khả năng nhiễm trùng vi khuẩn. Khuyến nghị liệu pháp kháng sinh kết hợp với quản lý sốt truyền thống.",
-      seekEmergencyCare: false
-    }
-  },
-  {
-    // Third script of discussion between User and System
-    userMessage: "Điều này có nghiêm trọng không? Tôi có những đốm trắng trên amidan và các tuyến ở cổ bị sưng",
-    systemResponse: "Độ tin cậy chẩn đoán GraphRAG: 91% cho viêm amidan do vi khuẩn...\
-                        Phân tích 1.247 trường hợp với dịch tiết amidan và sưng hạch bạch huyết.\
-                        Cần can thiệp dược phẩm ngay lập tức với chăm sóc truyền thống hỗ trợ.",
-    medicines: [
-      {
-        name: "Azithromycin 500mg (Zithromax)",
-        description: "Kháng sinh macrolide cho các chủng kháng penicillin. GraphRAG khuyến nghị cho viêm amidan nặng có dịch tiết rõ ràng.",
-        dosage: "Uống 500mg một lần mỗi ngày trong 3 ngày, tốt nhất là cùng giờ mỗi ngày"
-      },
-      {
-        name: "Cao chiết Tawa-tawa (Euphorbia hirta)",
-        description: "Thuốc truyền thống Philippines có đặc tính tăng cường miễn dịch. Hỗ trợ phục hồi và giảm viêm tự nhiên.",
-        dosage: "Uống 5ml cao chiết pha với nước ấm, hai lần mỗi ngày sau bữa ăn"
-      }
-    ],
-    analysis: {
-      severity: "trung bình",
-      analysis: "GraphRAG xác nhận viêm amidan do vi khuẩn cần kháng sinh. Hãy đến phòng khám nếu các triệu chứng không cải thiện trong 48 giờ. Các phòng khám ở Manila: Trung tâm Y tế Makati hoặc St. Luke's BGC.",
-      seekEmergencyCare: false
-    }
-  }
-];
-// ######################################### THE SCRIPT ENDED HERE ###################################################################
-
-export default function ChatInterface({ initialMessages = [] }: ChatInterfaceProps) {
+export default function ChatInterface3({ 
+  initialMessages = [], 
+  websocketUrl = "ws://localhost:8765",
+  onMedicinesUpdate 
+}: ChatInterface3Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       id: '1',
       type: 'assistant',
-      content: "Hello! I'm your medical assistant. I can help you understand your symptoms and find local medicines. How are you feeling today?",
+      content: "Hello! I'm your medical assistant combining SEALION Graph-RAG and MCP to provide both modern and traditional medicine recommendations. How are you feeling today?",
       timestamp: new Date()
     },
     ...initialMessages
   ]);
+  
   const [inputMessage, setInputMessage] = useState("");
   const [isTyping, setIsTyping] = useState(false);
-  const [conversationStep, setConversationStep] = useState(0);
-  const [awaitingInput, setAwaitingInput] = useState(false);
-  const [typingStep, setTypingStep] = useState(0);
+  const [isConnected, setIsConnected] = useState(false);
+  const [connectionStatus, setConnectionStatus] = useState("Connecting...");
+  
+  // Progress tracking for SEALION API
+  const [progressSteps, setProgressSteps] = useState<string[]>([]);
+  const [progressStartAt, setProgressStartAt] = useState<number | null>(null);
+  const [elapsedMs, setElapsedMs] = useState<number>(0);
+  
+  // WebSocket ref for GraphRAG
+  const wsRef = useRef<WebSocket | null>(null);
+  const reconnectTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+  
+  // Store responses from both systems
+  const sealionResponseRef = useRef<any>(null);
+  const graphragResponseRef = useRef<any>(null);
+  
+  // Expanded state for medicines and methods
+  const [expandedMedicines, setExpandedMedicines] = useState<{[key: string]: boolean}>({});
+  const [expandedMethods, setExpandedMethods] = useState<{[key: string]: boolean}>({});
 
-  // Handle typing step rotation
+  // Auto-scroll
   useEffect(() => {
-    if (isTyping) {
-      const interval = setInterval(() => {
-        setTypingStep((prev) => (prev + 1) % 3);
-      }, 1000);
-      return () => clearInterval(interval);
-    } else {
-      setTypingStep(0);
-    }
-  }, [isTyping]);
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
 
-  // Handle any key press to trigger scripted responses
+  // Elapsed time ticker
   useEffect(() => {
-    const handleKeyPress = (e: KeyboardEvent) => {
-      if (conversationStep < SCRIPTED_CONVERSATION.length && !isTyping && !awaitingInput) {
-        triggerScriptedConversation();
+    if (!isTyping || progressStartAt == null) return;
+    const t = setInterval(() => {
+      setElapsedMs(Date.now() - progressStartAt);
+    }, 500);
+    return () => clearInterval(t);
+  }, [isTyping, progressStartAt]);
+
+  const formatElapsed = (ms: number) => {
+    const totalSeconds = Math.floor(ms / 1000);
+    const minutes = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+    const seconds = (totalSeconds % 60).toString().padStart(2, '0');
+    return `${minutes}:${seconds}`;
+  };
+
+  // WebSocket connection for GraphRAG
+  useEffect(() => {
+    const connectWebSocket = () => {
+      try {
+        if (wsRef.current?.readyState === WebSocket.OPEN) {
+          wsRef.current.close();
+        }
+
+        wsRef.current = new WebSocket(websocketUrl);
+
+        wsRef.current.onopen = () => {
+          setIsConnected(true);
+          setConnectionStatus("GraphRAG Connected");
+          if (reconnectTimeoutRef.current) {
+            clearTimeout(reconnectTimeoutRef.current);
+            reconnectTimeoutRef.current = null;
+          }
+          console.log("Connected to GraphRAG server");
+        };
+
+        wsRef.current.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            const rawType = (data?.type ?? "").toString().toLowerCase();
+            
+            if (rawType === "connection") {
+              setConnectionStatus(data.status === "ready" ? "GraphRAG Ready" : "Waiting for documents...");
+              return;
+            }
+
+            if (rawType === "status") return;
+
+            if (rawType === "error") {
+              console.error("GraphRAG error:", data.message);
+              return;
+            }
+
+            if (["response", "medical_response", "analysis", "result"].includes(rawType)) {
+              // Store GraphRAG response
+              graphragResponseRef.current = data;
+              
+              // Check if we have both responses
+              if (sealionResponseRef.current && graphragResponseRef.current) {
+                createCombinedResponse();
+              }
+            }
+          } catch (err) {
+            console.error("Error parsing WebSocket message:", err);
+          }
+        };
+
+        wsRef.current.onerror = (error) => {
+          console.error("WebSocket error:", error);
+          setIsConnected(false);
+          setConnectionStatus("Connection error");
+        };
+
+        wsRef.current.onclose = () => {
+          console.log("WebSocket connection closed");
+          setIsConnected(false);
+          setConnectionStatus("Disconnected - Reconnecting...");
+          if (!reconnectTimeoutRef.current) {
+            reconnectTimeoutRef.current = setTimeout(() => {
+              reconnectTimeoutRef.current = null;
+              connectWebSocket();
+            }, 3000);
+          }
+        };
+      } catch (e) {
+        console.error("Failed to create WebSocket connection:", e);
+        setConnectionStatus("Failed to connect");
       }
     };
 
-    window.addEventListener('keydown', handleKeyPress);
-    return () => window.removeEventListener('keydown', handleKeyPress);
-  }, [conversationStep, isTyping, awaitingInput]);
+    connectWebSocket();
 
-  const triggerScriptedConversation = () => {
-    if (conversationStep >= SCRIPTED_CONVERSATION.length) return;
-
-    const currentScript = SCRIPTED_CONVERSATION[conversationStep];
-    setAwaitingInput(true);
-
-    // Add user message
-    const userMessage: ChatMessage = {
-      id: `user-${Date.now()}`,
-      type: 'user',
-      content: currentScript.userMessage,
-      timestamp: new Date()
+    return () => {
+      if (reconnectTimeoutRef.current) {
+        clearTimeout(reconnectTimeoutRef.current);
+        reconnectTimeoutRef.current = null;
+      }
+      if (wsRef.current) wsRef.current.close();
     };
+  }, [websocketUrl]);
 
-    setMessages(prev => [...prev, userMessage]);
-    setIsTyping(true);
+  // Call SEALION API (from Journey #1)
+  const callSealionAPI = async (query: string): Promise<any> => {
+    return new Promise<any>((resolve, reject) => {
+      try {
+        const EventSource = (window as any).EventSource || require('eventsource');
+        const backend = "https://api.sealionmcp.com";
+        const es = new EventSource(`${backend}/stream?query=${encodeURIComponent(query)}`, { 
+          withCredentials: false 
+        });
 
-    // Simulate typing delay and add system response
-    setTimeout(() => {
-      const systemMessage: ChatMessage = {
-        id: `system-${Date.now()}`,
-        type: 'assistant',
-        content: currentScript.systemResponse,
-        timestamp: new Date(),
-        medicines: currentScript.medicines,
-        analysis: currentScript.analysis
-      };
+        es.addEventListener("status", () => {
+          if (progressStartAt == null) {
+            setProgressStartAt(Date.now());
+            setElapsedMs(0);
+          }
+        });
 
-      setMessages(prev => [...prev, systemMessage]);
-      setIsTyping(false);
-      setConversationStep(prev => prev + 1);
-      setAwaitingInput(false);
-    }, 3000); // 3 second delay to show all typing steps
+        es.addEventListener("progress", (ev: EventSourceMessageEvent) => {
+          try {
+            const payload = JSON.parse(ev.data as string) as { message?: string };
+            if (progressStartAt == null) {
+              setProgressStartAt(Date.now());
+              setElapsedMs(0);
+            }
+            const message = payload.message ?? '';
+            if (message) {
+              setProgressSteps((prev) => {
+                if (prev.length === 0) return [message];
+                if (prev[prev.length - 1] !== message) return [...prev, message];
+                return prev;
+              });
+            }
+          } catch (e) {
+            // ignore parsing issues
+          }
+        });
+
+        const handleCompleted = (ev: EventSourceMessageEvent) => {
+          try { es.close(); } catch {}
+          if (progressStartAt != null) {
+            setElapsedMs(Date.now() - progressStartAt);
+          }
+          setProgressSteps((prev) => (prev.length && prev[prev.length - 1] === "Completed" ? prev : [...prev, "Completed"]));
+          try {
+            const payload = JSON.parse(ev.data as string) as { data?: any };
+            const resultData = payload?.data ?? {};
+            resolve(resultData.result || resultData);
+          } catch (e) {
+            resolve({ ok: true });
+          }
+        };
+
+        es.addEventListener("completed", handleCompleted);
+        es.addEventListener("complete", handleCompleted);
+        
+        es.onerror = (e: Event) => {
+          try { es.close(); } catch {}
+          reject(new Error("SEALION API connection failed"));
+        };
+      } catch (error) {
+        reject(error);
+      }
+    });
+  };
+
+  // Call GraphRAG via WebSocket
+  const callGraphRAG = (query: string) => {
+    if (wsRef.current?.readyState === WebSocket.OPEN) {
+      wsRef.current.send(JSON.stringify({ type: "query", message: query }));
+    }
+  };
+
+  // Combine responses from both systems
+  const createCombinedResponse = () => {
+    const sealion = sealionResponseRef.current;
+    const graphrag = graphragResponseRef.current;
+    
+    // Parse GraphRAG response if it's a JSON string in the message field
+    let parsedGraphRAG: any = null;
+    if (graphrag?.message && typeof graphrag.message === 'string') {
+      try {
+        // Remove ```json wrapper if present
+        const cleanMessage = graphrag.message.replace(/```(?:json)?/gi, '').replace(/```/g, '').trim();
+        parsedGraphRAG = JSON.parse(cleanMessage);
+      } catch (e) {
+        console.error('Failed to parse GraphRAG JSON:', e);
+      }
+    }
+    
+    // Build combined analysis text
+    let combinedContent = "";
+    
+    if (sealion?.analysis) {
+      combinedContent += sealion.analysis;
+    }
+    if (parsedGraphRAG?.analysis) {
+      if (combinedContent) combinedContent += "\n\n";
+      combinedContent += parsedGraphRAG.analysis;
+    } else if (graphrag?.analysis && typeof graphrag.analysis === 'string') {
+      if (combinedContent) combinedContent += "\n\n";
+      combinedContent += graphrag.analysis;
+    }
+    if (!combinedContent) combinedContent = "Analysis complete. Please see the recommendations below.";
+    
+    // Combine medicines
+    const allMedicines: Array<{ name: string; dosage?: string; description?: string; localAvailability?: string; source?: 'sealion' | 'graphrag' }> = [];
+    
+    if (sealion?.medicine_details && Array.isArray(sealion.medicine_details)) {
+      allMedicines.push(...sealion.medicine_details.map((m: any) => ({
+        name: m.medicine_name || m.name,
+        dosage: m.dosage,
+        description: m.medicine_instruction || m.description || m.explanation,
+        localAvailability: m.availability || m.localAvailability,
+        source: 'sealion' as const
+      })));
+    }
+    if (parsedGraphRAG?.medicines && Array.isArray(parsedGraphRAG.medicines)) {
+      allMedicines.push(...parsedGraphRAG.medicines.map((m: any) => ({
+        name: m.name,
+        dosage: m.dosage,
+        description: m.description,
+        localAvailability: m.localAvailability,
+        source: 'graphrag' as const
+      })));
+    } else if (graphrag?.medicines && Array.isArray(graphrag.medicines)) {
+      allMedicines.push(...graphrag.medicines.map((m: any) => ({
+        name: m.name,
+        dosage: m.dosage,
+        description: m.description,
+        localAvailability: m.localAvailability,
+        source: 'graphrag' as const
+      })));
+    }
+    
+    // Non-pharmacologic methods
+    const allMethods: NonPharmacologicMethod[] = [
+      ...(sealion?.non_pharmacologic_methods || [])
+    ];
+    
+    // Severity
+    const severities = ['low', 'medium', 'high'];
+    const sealionSeverity = severities.indexOf(sealion?.severity || 'low');
+    const graphragSeverity = severities.indexOf((parsedGraphRAG?.severity || graphrag?.severity || 'low') as string);
+    const maxSeverity = severities[Math.max(sealionSeverity, graphragSeverity)] as 'low' | 'medium' | 'high';
+    
+    const seekEmergencyCare = sealion?.severity === 'high' || 
+                              Boolean(parsedGraphRAG?.seekEmergencyCare) || 
+                              Boolean(graphrag?.seekEmergencyCare);
+    
+    const combinedMessage: ChatMessage = {
+      id: Date.now().toString(),
+      type: 'assistant',
+      content: combinedContent,
+      timestamp: new Date(),
+      medicines: allMedicines,
+      nonPharmacologic: allMethods,
+      analysis: {
+        severity: maxSeverity,
+        analysis: combinedContent,
+        seekEmergencyCare
+      },
+      source: 'combined'
+    };
+    
+    setMessages(prev => [...prev, combinedMessage]);
+    setIsTyping(false);
+    
+    if (onMedicinesUpdate && allMedicines.length > 0) {
+      onMedicinesUpdate(allMedicines);
+    }
+    
+    // Clear refs for next query
+    sealionResponseRef.current = null;
+    graphragResponseRef.current = null;
   };
 
   const handleSendMessage = async () => {
@@ -182,21 +384,56 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     };
 
     setMessages(prev => [...prev, userMessage]);
+    const currentQuery = inputMessage;
     setInputMessage("");
     setIsTyping(true);
+    setProgressSteps([]);
+    setProgressStartAt(null);
+    
+    // Reset response refs
+    sealionResponseRef.current = null;
+    graphragResponseRef.current = null;
 
-    // Simulate a generic response for manual inputs
-    setTimeout(() => {
-      const assistantMessage: ChatMessage = {
+    try {
+      // Call both systems in parallel
+      const [sealionPromise] = await Promise.allSettled([
+        callSealionAPI(currentQuery)
+      ]);
+      
+      // Also call GraphRAG
+      callGraphRAG(currentQuery);
+      
+      // Store SEALION response
+      if (sealionPromise.status === 'fulfilled') {
+        sealionResponseRef.current = sealionPromise.value;
+        
+        // If GraphRAG already responded, create combined response
+        if (graphragResponseRef.current) {
+          createCombinedResponse();
+        }
+      } else {
+        console.error('SEALION API error:', sealionPromise.reason);
+      }
+      
+      // Timeout to still show something if one side is slow
+      setTimeout(() => {
+        if (isTyping && (sealionResponseRef.current || graphragResponseRef.current)) {
+          createCombinedResponse();
+        }
+      }, 10000);
+      
+    } catch (error) {
+      const errorMessage: ChatMessage = {
         id: Date.now().toString(),
         type: 'assistant',
-        content: "Thank you for sharing that information. I'm analyzing your symptoms. For the scripted demonstration, please press any key to continue with the predefined conversation flow.",
-        timestamp: new Date()
+        content: `I'm having trouble connecting to the medical databases. Please try again in a moment.`,
+        timestamp: new Date(),
+        error: true
       };
       
-      setMessages(prev => [...prev, assistantMessage]);
+      setMessages(prev => [...prev, errorMessage]);
       setIsTyping(false);
-    }, 3000);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
@@ -206,22 +443,53 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
     }
   };
 
+  const getSeverityColor = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  const getSeverityIcon = (severity: string) => {
+    switch (severity) {
+      case 'high':
+        return '🔴';
+      case 'medium':
+        return '🟡';
+      case 'low':
+        return '🟢';
+      default:
+        return '⚪';
+    }
+  };
+
   return (
-    <div className="bg-white border border-gray-200 rounded-xl shadow-lg h-[600px] max-w-4xl w-full flex flex-col">
+    <div className="bg-white border border-gray-200 rounded-xl shadow-lg h-[700px] max-w-5xl w-full flex flex-col">
       {/* Chat Header */}
-      <div className="bg-medical-blue text-white p-4 rounded-t-xl flex items-center justify-between">
+      <div className="bg-gradient-to-r from-blue-600 to-blue-700 text-white p-4 rounded-t-xl flex items-center justify-between">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
-            <Bot size={16} />
+          <div className="w-10 h-10 bg-white bg-opacity-20 rounded-full flex items-center justify-center">
+            <Bot size={20} />
           </div>
           <div>
-            <h3 className="font-semibold" data-testid="text-assistant-title">Medical Assistant (COMBINATION OF SEALION Graph-RAG AND MCP TO PROVIDE MODERN AND TRADITIONAL MEDICINE)</h3>
-            <p className="text-xs opacity-75" data-testid="text-location">Online • Manila, Philippines</p>
+            <h3 className="font-semibold text-lg" data-testid="text-assistant-title">Combined Medical Assistant</h3>
+            <p className="text-sm opacity-90" data-testid="text-subtitle">SEALION MCP + GraphRAG</p>
+            <p className="text-xs opacity-75" data-testid="text-location">Online • Global Coverage</p>
           </div>
         </div>
         <div className="flex items-center space-x-2">
-          <div className="w-2 h-2 bg-medical-success rounded-full"></div>
-          <span className="text-xs" data-testid="text-secure-connection">Secure Connection</span>
+          {isConnected ? (
+            <Wifi size={16} className="text-green-400" />
+          ) : (
+            <WifiOff size={16} className="text-red-400" />
+          )}
+          <span className="text-sm" data-testid="text-connection-status">{connectionStatus}</span>
         </div>
       </div>
 
@@ -230,43 +498,165 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
         {messages.map((message) => (
           <div key={message.id} className={`flex ${message.type === 'user' ? 'justify-end' : 'items-start space-x-3'}`}>
             {message.type === 'assistant' && (
-              <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm flex-shrink-0">
-                <Bot size={16} />
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-white text-sm flex-shrink-0 ${
+                message.error ? 'bg-red-500' : 'bg-blue-600'
+              }`}>
+                {message.error ? <AlertTriangle size={16} /> : <Bot size={16} />}
               </div>
             )}
             
-            <div className={`rounded-lg p-3 max-w-sm ${
+            <div className={`rounded-lg p-4 max-w-2xl ${
               message.type === 'user' 
-                ? 'bg-medical-blue text-white' 
-                : 'bg-medical-light'
+                ? 'bg-blue-600 text-white ml-auto' 
+                : message.error 
+                ? 'bg-red-50 border border-red-200'
+                : 'bg-gray-50 border border-gray-200'
             }`}>
-              <p className="text-sm" data-testid={`message-${message.type}-${message.id}`}>
+              <p className="text-sm whitespace-pre-line leading-relaxed" data-testid={`message-${message.type}-${message.id}`}>
                 {message.content}
               </p>
               
               {/* Medicine recommendations */}
               {message.medicines && message.medicines.length > 0 && (
-                <div className="mt-3 space-y-2">
-                  <p className="text-sm font-medium">Recommended medicines:</p>
-                  {message.medicines.map((medicine, idx) => (
-                    <div key={idx} className="bg-white p-2 rounded border" data-testid={`medicine-recommendation-${idx}`}>
-                      <p className="font-medium text-xs">{medicine.name}</p>
-                      <p className="text-xs text-medical-gray">{medicine.description}</p>
-                      <p className="text-xs text-medical-gray">Dosage: {medicine.dosage}</p>
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">🌿</span>
+                      <p className="text-sm font-semibold text-green-700">Recommended Medicines:</p>
                     </div>
-                  ))}
+                    {message.medicines.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedMedicines(prev => ({
+                          ...prev,
+                          [message.id]: !prev[message.id]
+                        }))}
+                        className="text-xs text-green-600 hover:text-green-700 p-2 h-auto"
+                      >
+                        {expandedMedicines[message.id] ? 'Show Less' : `Show All (${message.medicines.length})`}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3">
+                    {(expandedMedicines[message.id] ? message.medicines : message.medicines.slice(0, 2)).map((medicine, idx) => (
+                      <div key={idx} className="bg-white p-3 rounded-lg border border-green-100 shadow-sm" data-testid={`medicine-recommendation-${idx}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm text-green-800 capitalize">
+                              {medicine.name || medicine.medicine_name}
+                            </p>
+                            <p className="text-xs text-gray-700 mt-1 leading-relaxed">
+                              {medicine.description || medicine.medicine_instruction || medicine.explanation}
+                            </p>
+                            {medicine.dosage && (
+                              <div className="mt-2">
+                                <Badge variant="secondary" className="text-xs bg-green-50 text-green-700 border-green-200">
+                                  Dosage: {medicine.dosage}
+                                </Badge>
+                              </div>
+                            )}
+                            {medicine.localAvailability && (
+                              <div className="mt-1">
+                                <Badge variant="outline" className="text-xs">
+                                  {medicine.localAvailability}
+                                </Badge>
+                              </div>
+                            )}
+                          </div>
+                          {medicine.source && (
+                            <Badge variant="outline" className="text-xs ml-2">
+                              {medicine.source === 'sealion' ? 'MCP' : 'GraphRAG'}
+                            </Badge>
+                          )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               )}
 
-              {/* Severity indicator */}
+              {/* Non-pharmacologic methods */}
+              {message.nonPharmacologic && message.nonPharmacologic.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center space-x-2">
+                      <span className="text-lg">🏠</span>
+                      <p className="text-sm font-semibold text-blue-700">Home Care Methods:</p>
+                    </div>
+                    {message.nonPharmacologic.length > 2 && (
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setExpandedMethods(prev => ({
+                          ...prev,
+                          [message.id]: !prev[message.id]
+                        }))}
+                        className="text-xs text-blue-600 hover:text-blue-700 p-2 h-auto"
+                      >
+                        {expandedMethods[message.id] ? 'Show Less' : `Show All (${message.nonPharmacologic.length})`}
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-3">
+                    {(expandedMethods[message.id] ? message.nonPharmacologic : message.nonPharmacologic.slice(0, 2)).map((method, idx) => (
+                      <div key={idx} className="bg-white p-3 rounded-lg border border-blue-100 shadow-sm" data-testid={`method-recommendation-${idx}`}>
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <p className="font-semibold text-sm text-blue-800 capitalize">{method.method_name}</p>
+                            <p className="text-xs text-gray-700 mt-1 leading-relaxed">{method.instructions}</p>
+                            <div className="flex flex-wrap gap-2 mt-2">
+                              {method.frequency && (
+                                <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  Frequency: {method.frequency}
+                                </Badge>
+                              )}
+                              {method.duration && (
+                                <Badge variant="secondary" className="text-xs bg-blue-50 text-blue-700 border-blue-200">
+                                  Duration: {method.duration}
+                                </Badge>
+                              )}
+                            </div>
+                            {method.notes && (
+                              <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs text-yellow-800 flex items-start space-x-1">
+                                <span>⚠️</span>
+                                <span>{method.notes}</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Severity indicator and emergency warning */}
               {message.analysis?.severity && (
-                <div className="mt-2">
-                  <Badge 
-                    variant={message.analysis.severity === 'high' ? 'destructive' : 
-                            message.analysis.severity === 'medium' ? 'default' : 'secondary'}
-                    data-testid={`severity-${message.analysis.severity}`}
-                  >
-                    {message.analysis.severity} priority
+                <div className="mt-4 space-y-2">
+                  <div className={`inline-flex items-center px-3 py-2 rounded-full text-sm font-medium border shadow-sm ${getSeverityColor(message.analysis.severity)}`} data-testid={`severity-${message.analysis.severity}`}>
+                    <span className="mr-2">{getSeverityIcon(message.analysis.severity)}</span>
+                    {message.analysis.severity.toUpperCase()} PRIORITY
+                  </div>
+                  {message.analysis.seekEmergencyCare && (
+                    <div className="mt-3 p-3 bg-red-50 border border-red-300 rounded-lg">
+                      <div className="flex items-start space-x-2">
+                        <AlertTriangle className="w-5 h-5 text-red-600 flex-shrink-0 mt-0.5" />
+                        <div>
+                          <p className="text-sm font-semibold text-red-800">Immediate Medical Attention Recommended</p>
+                          <p className="text-xs text-red-700 mt-1">Please consider consulting with a healthcare professional or visiting the nearest medical facility.</p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Source indicator */}
+              {message.source && (
+                <div className="mt-3">
+                  <Badge variant="outline" className="text-xs">
+                    Source: {message.source === 'combined' ? 'SEALION + GraphRAG' : message.source}
                   </Badge>
                 </div>
               )}
@@ -277,62 +667,47 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
         {/* Typing indicator */}
         {isTyping && (
           <div className="flex items-start space-x-3">
-            <div className="w-8 h-8 bg-medical-blue rounded-full flex items-center justify-center text-white text-sm">
+            <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm">
               <Bot size={16} />
             </div>
-            <div className="bg-medical-light rounded-lg p-3 max-w-sm">
-              <div className="flex items-center space-x-2 text-xs text-medical-gray">
-                <Loader2 className="w-3 h-3 animate-spin" />
-                <span data-testid="typing-indicator">
-                  {(() => {
-                    const steps = [
-                      "Translating the meaning",
-                      "Searching the local / traditional medicine nearby your area",
-                      "Found medicines..."
-                    ];
-                    return steps[typingStep];
-                  })()}
+            <div className="bg-gray-50 rounded-lg p-4 max-w-md border border-gray-200">
+              <div className="flex items-center space-x-3 text-sm text-gray-600">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                <span data-testid="typing-indicator" className="animate-pulse">
+                  {progressSteps.length > 0 
+                    ? progressSteps[progressSteps.length - 1] 
+                    : "Analyzing with SEALION and GraphRAG..."}
+                </span>
+                <span className="text-xs text-gray-500 ml-auto">
+                  {formatElapsed(elapsedMs)}
                 </span>
               </div>
             </div>
           </div>
         )}
-
-        {/* Instruction for scripted demo */}
-        {conversationStep < SCRIPTED_CONVERSATION.length && !isTyping && !awaitingInput && (
-          <div className="text-center py-2">
-            <p className="text-xs text-medical-gray bg-yellow-50 p-2 rounded-lg border border-yellow-200">
-              Press any key to continue the scripted conversation ({conversationStep + 1}/{SCRIPTED_CONVERSATION.length})
-            </p>
-          </div>
-        )}
-
-        {conversationStep >= SCRIPTED_CONVERSATION.length && !isTyping && (
-          <div className="text-center py-2">
-            <p className="text-xs text-medical-gray bg-green-50 p-2 rounded-lg border border-green-200">
-              Scripted conversation completed! You can now type your own messages.
-            </p>
-          </div>
-        )}
+        
+        <div ref={messagesEndRef} />
       </div>
 
       {/* Chat Input */}
-      <div className="border-t border-gray-200 p-4">
-        <div className="flex items-center space-x-3">
-          <Input
-            type="text"
-            placeholder={conversationStep < SCRIPTED_CONVERSATION.length ? "Press any key for scripted demo..." : "Describe your symptoms..."}
-            value={inputMessage}
-            onChange={(e) => setInputMessage(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="flex-1"
-            disabled={isTyping}
-            data-testid="input-chat-message"
-          />
+      <div className="border-t border-gray-200 p-4 bg-gray-50">
+        <div className="flex items-end space-x-3">
+          <div className="flex-1">
+            <Input
+              type="text"
+              placeholder="Describe your symptoms and location..."
+              value={inputMessage}
+              onChange={(e) => setInputMessage(e.target.value)}
+              onKeyPress={handleKeyPress}
+              className="w-full border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+              disabled={isTyping}
+              data-testid="input-chat-message"
+            />
+          </div>
           <Button
             onClick={handleSendMessage}
             disabled={!inputMessage.trim() || isTyping}
-            className="bg-medical-blue hover:bg-medical-blue-dark"
+            className="bg-blue-600 hover:bg-blue-700 px-4 py-2"
             data-testid="button-send-message"
           >
             {isTyping ? (
@@ -342,18 +717,18 @@ export default function ChatInterface({ initialMessages = [] }: ChatInterfacePro
             )}
           </Button>
         </div>
-        <div className="flex items-center justify-between mt-2 text-xs text-medical-gray">
-          <div className="flex items-center space-x-4">
-            <div className="flex items-center space-x-1">
-              <Shield size={12} />
+        <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
+          <div className="flex items-center space-x-6">
+            <div className="flex items-center space-x-2">
+              <Shield size={12} className="text-green-600" />
               <span data-testid="text-disclaimer-privacy">Private & Secure</span>
             </div>
-            <div className="flex items-center space-x-1">
-              <Clock size={12} />
+            <div className="flex items-center space-x-2">
+              <Clock size={12} className="text-blue-600" />
               <span data-testid="text-disclaimer-availability">24/7 Available</span>
             </div>
           </div>
-          <p className="text-xs" data-testid="text-medical-disclaimer">
+          <p className="text-xs text-gray-600 max-w-md text-right" data-testid="text-medical-disclaimer">
             For informational purposes only. Consult a healthcare professional for serious conditions.
           </p>
         </div>
