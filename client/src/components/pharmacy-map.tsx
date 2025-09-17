@@ -66,7 +66,7 @@ export default function PharmacyMap({
   city = "Bangkok",
   className = "",
   medicines = [],
-  websocketUrl = "ws://localhost:8765",
+  websocketUrl = "https://acquisitions-induction-considerable-webmaster.trycloudflare.com",
 }: PharmacyMapProps) {
   const [stores, setStores] = useState<ConveniencePlace[]>([]);
   const [loading, setLoading] = useState(false);
@@ -452,7 +452,7 @@ export default function PharmacyMap({
                       <h4 className="font-semibold text-sm">{p.name}</h4>
                       {typeof p.distance_km === "number" ? (
                         <Badge variant="outline" className="text-xs">
-                          {p.distance_km} km{typeof p.duration_min === "number" ? ` • ${p.duration_min} min` : ""}
+                          {p.distance_km} km
                         </Badge>
                       ) : null}
                     </div>

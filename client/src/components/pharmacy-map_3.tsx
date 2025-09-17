@@ -67,7 +67,8 @@ export default function PharmacyMap3({
   country = "",
   className = "",
   medicines = [],
-  websocketUrl = "ws://localhost:8765",
+  websocketUrl = "https://acquisitions-induction-considerable-webmaster.trycloudflare.com",
+  //websocketUrl = "ws://localhost:8765",
 }: Props) {
   // Split meds by source to decide which search each belongs to
   const medsGraph = useMemo(
@@ -577,7 +578,7 @@ function PlaceItem({
           <h4 className="font-semibold text-sm">{p.name}</h4>
           {typeof p.distance_km === "number" ? (
             <Badge variant="outline" className="text-xs">
-              {p.distance_km} km{typeof p.duration_min === "number" ? ` • ${p.duration_min} min` : ""}
+              {p.distance_km} km
             </Badge>
           ) : null}
         </div>
