@@ -103,8 +103,8 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
   const callMedicalAPI = async (query: string) => {
     return new Promise<any>((resolve, reject) => {
       try {
-        const backend = "https://api.sealionmcp.com";
-        // const backend = "http://localhost:5002"
+        // const backend = "https://api.sealionmcp.com";
+        const backend = "http://localhost:8000"
         const es = new EventSource(`${backend}/stream?query=${query}`, { withCredentials: false });
         es.onopen = () => console.log('SSE open, readyState=', es.readyState)
 
@@ -491,17 +491,17 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
               data-testid="input-chat-message"
             />
           </div>
-          <Button
-            onClick={handleSendMessage}
-            disabled={!inputMessage.trim() || isTyping}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2"
-            data-testid="button-send-message"
-          >
-            {isTyping ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
-            ) : (
-              <Send size={16} />
-            )}
+            <Button
+              onClick={handleSendMessage}
+              disabled={!inputMessage.trim() || isTyping}
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2"
+              data-testid="button-send-message"
+              >
+              {isTyping ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Send size={16} />
+              )}
           </Button>
         </div>
         <div className="flex items-center justify-between mt-3 text-xs text-gray-500">
