@@ -122,7 +122,7 @@ interface ChatInterface2Props {
 
 export default function ChatInterface2({
   initialMessages = [],
-  websocketUrl = "https://acquisitions-induction-considerable-webmaster.trycloudflare.com",
+  websocketUrl = " https://prove-penguin-img-exercise.trycloudflare.com",
   //websocketUrl = "ws://localhost:8765",
 
   onMedicinesUpdate,

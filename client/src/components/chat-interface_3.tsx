@@ -55,7 +55,7 @@ interface ChatInterface3Props {
 
 export default function ChatInterface3({ 
   initialMessages = [], 
-  websocketUrl = "https://acquisitions-induction-considerable-webmaster.trycloudflare.com",
+  websocketUrl = " https://prove-penguin-img-exercise.trycloudflare.com",
   //websocketUrl = "ws://localhost:8765",
   onMedicinesUpdate 
 }: ChatInterface3Props) {

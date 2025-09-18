@@ -66,7 +66,7 @@ export default function PharmacyMap({
   city = "Bangkok",
   className = "",
   medicines = [],
-  websocketUrl = "https://acquisitions-induction-considerable-webmaster.trycloudflare.com",
+  websocketUrl = " https://prove-penguin-img-exercise.trycloudflare.com",
 }: PharmacyMapProps) {
   const [stores, setStores] = useState<ConveniencePlace[]>([]);
   const [loading, setLoading] = useState(false);
