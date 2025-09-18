@@ -103,8 +103,8 @@ export default function ChatInterface({ initialMessages = [], onMedicinesUpdate 
   const callMedicalAPI = async (query: string) => {
     return new Promise<any>((resolve, reject) => {
       try {
-        // const backend = "https://api.sealionmcp.com";
-        const backend = "http://localhost:8000"
+        const backend = "https://api.sealionmcp.com";
+        // const backend = "http://localhost:8000"
         const es = new EventSource(`${backend}/stream?query=${query}`, { withCredentials: false });
         es.onopen = () => console.log('SSE open, readyState=', es.readyState)
 
