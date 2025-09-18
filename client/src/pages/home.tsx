@@ -15,6 +15,8 @@ import PharmacyMap3 from "@/components/pharmacy-map_3";
 
 import myPhoto from "@assets/ai_medical_assisstant_pp.png";
 import SEALIONPHOTO from "@assets/sealion-llm.png";
+import { PricingSection } from "@/components/ui/pricing-section";
+import { ContactSection } from "@/components/ui/contact-section";
 
 import { Link } from "wouter";
 import { 
@@ -303,7 +305,7 @@ export default function Home() {
           </div>
         </div>
       </section>
-
+      
       {/* How It Works */}
       <section id="how-it-works" className="py-20 bg-medical-light">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -388,6 +390,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Travel Insurance Companies</h3>
                 <p className="text-medical-gray">
                   Bundle the chatbot as a value-added service for policyholders abroad (reduced claims via preventive guidance).
+                  The chatbot can be incorporated into travel insurance companies' websites.
                 </p>
               </CardContent>
             </Card>
@@ -401,6 +404,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Airlines / Travel Agencies</h3>
                 <p className="text-medical-gray">
                   Offer the chatbot to premium customers as a travel wellness companion.
+                  The chatbot can be incorporated into travel agencies' websites.
                 </p>
               </CardContent>
             </Card>
@@ -414,6 +418,7 @@ export default function Home() {
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Pharmacies & Healthcare Chains</h3>
                 <p className="text-medical-gray">
                   Use it as a digital triage & referral tool that funnels customers into local clinics.
+                  The chatbot could be integrated to Pharmacies to promote their products.
                 </p>
               </CardContent>
             </Card>
@@ -422,17 +427,27 @@ export default function Home() {
             <Card className="bg-medical-light hover:shadow-lg transition-shadow" data-testid="card-feature-location">
               <CardContent className="p-6">
                 <div className="w-12 h-12 bg-medical-blue rounded-lg flex items-center justify-center mb-4">
-                  <Briefcase className="text-white text-xl" /> {/* Changed from MapPin */}
+                  <Briefcase className="text-white text-xl" /> 
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">Corporate Travel Programs</h3>
                 <p className="text-medical-gray">
-                  Provide to employees on overseas assignments for duty-of-care compliance.
+                  Offer chatbot solutions or apps for internal staff, assisting them with their health and well-being during business trips, travel, company outings, and more.
                 </p>
               </CardContent>
             </Card>
           </div>
         </div>
       </section>
+
+      
+      <PricingSection onContactSales={() => {
+        // You can implement your contact sales logic here, e.g., open a modal or redirect
+        window.location.href = "mailto:sales@medassist.ai";
+      }} />
+
+      {/* ContactSection is actually exported as ContactSection, not default, so import and use it like this: */}
+      {/* import { ContactSection } from "@/components/ui/contact-section"; */}
+      <ContactSection />
 
       {/* Live Demo Section */}
       <section id="demo" className="py-20 bg-white">
