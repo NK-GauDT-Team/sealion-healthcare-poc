@@ -67,7 +67,7 @@ export default function PharmacyMap3({
   country = "",
   className = "",
   medicines = [],
-  websocketUrl = " https://prove-penguin-img-exercise.trycloudflare.com",
+  websocketUrl = "wss://rag.apisealionrag.com/ws",
   //websocketUrl = "ws://localhost:8765",
 }: Props) {
   // Split meds by source to decide which search each belongs to

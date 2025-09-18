@@ -64,7 +64,7 @@ export default function PharmacyMap2({
   className = "",
   medicines = [],
 
-  websocketUrl = " https://prove-penguin-img-exercise.trycloudflare.com",
+  websocketUrl = "wss://rag.apisealionrag.com/ws",
   //websocketUrl = "ws://localhost:8765",
 }: PharmacyMapProps) {
   const [pharmacies, setPharmacies] = useState<Pharmacy[]>([]);
